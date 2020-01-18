@@ -1,0 +1,4 @@
+[submodule "sos-plugin-includes"]
+	path = sos-plugin-includes
+	url = https://gitlab.com/bakkesplugins/sos/sos-plugin-includes.git
+	branch = master
