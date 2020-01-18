@@ -12,10 +12,11 @@ The solution contains $(BAKKESMODSDK) environment variable references for the SD
 
 Example variable configuration:
 1. My BakkesMod base installation is located at `J:\SteamLibrary\steamapps\common\rocketleague\Binaries\Win32\bakkesmod`
-2. Point to variable to `J:\SteamLibrary\steamapps\common\rocketleague\Binaries\Win32\bakkesmod\bakkesmodsdk`
+2. Point the variable to `J:\SteamLibrary\steamapps\common\rocketleague\Binaries\Win32\bakkesmod\bakkesmodsdk`
 
 ## BakkesMod Settings File
-In the root directory of this repo, there's a file named `sos.set`. This is the BakkesMod Settings File that must 
+In the root directory of this repo, there's a file named `sos.set`. This is the BakkesMod Settings File that must be inserted into the following location to be able to control update frequency and SOS events
+- `J:\SteamLibrary\steamapps\common\rocketleague\Binaries\Win32\bakkesmod\plugins\settings`
 
 ## Websocket Server
 Address: ws://localhost:49122
