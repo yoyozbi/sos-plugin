@@ -1,0 +1,10 @@
+SOS - Overlay System
+9|Reset overlay components manually
+0|Reset Teams|SOS_c_send_reset_teams_event
+7
+0|Reset Player Cards|SOS_c_send_reset_player_cards_event
+7
+0|Force Update Player Cards|SOS_c_send_player_cards_force_update_event
+8
+5|Rate at which to send events to websocket (milliseconds)|sos_state_flush_rate|100|2000
+9|Original dll code by gboddin, modified and extended by SimpleAOB

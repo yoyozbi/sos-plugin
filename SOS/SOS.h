@@ -13,9 +13,9 @@
 #include "bakkesmod/plugin/bakkesmodplugin.h"
 using websocketpp::connection_hdl;
 
-class BakkesWebApi : public BakkesMod::Plugin::BakkesModPlugin
+class SOS : public BakkesMod::Plugin::BakkesModPlugin
 {
-	typedef websocketpp::server<websocketpp::config::asio> BakkesWebApiServer;
+	typedef websocketpp::server<websocketpp::config::asio> SOSServer;
 	typedef std::set<connection_hdl, std::owner_less<connection_hdl>> ConnectionSet;
 
 public:
@@ -24,9 +24,20 @@ public:
 private:
 	// Hook logic
 	void HookMatchStarted();
-	void HookGameStarted(std::string eventNam);
-	void HookPlayerChanged(std::string eventNam);
-	void HookGoalScored(std::string eventNam);
+	void HookMatchCreated(std::string eventName);
+	void HookMatchEnded(std::string eventName);
+	void HookCountdownInit(std::string eventName);
+	void HookGameStarted(std::string eventName);
+	void HookPodiumStart(std::string eventName);
+	void HookGoalScored(std::string eventName);
+	void HookCarDemolished(CarWrapper cw, void* params, std::string eventName);
+	
+	//Commands
+	void CommandResetTeamCards();
+	void CommandResetPlayerCards();
+	void CommandPlayerCardsForceUpdate();
+	void WebsocketServerInit();
+	void WebsocketServerClose();
 
 	// Player state logic
 	ApiPlayer PlayersState[16];
@@ -50,15 +61,15 @@ private:
 	// Event logic
 	void SendEvent(string eventName, ApiGame game);
 	void SendEvent(string eventName, ApiPlayer player);
+	//void SendEvent(string eventName, string testString);
+	void SendEvent(string eventName, json::JSON jsawn);
 	//void SendEvent(string eventName, ApiPlayer player, ApiTeam team);
 	//void SendEvent(string eventName, ApiPlayer player[], ApiTeam team[]);
 	
 	// Server logic
-	BakkesWebApiServer* ws_server;
+	SOSServer* ws_server;
 	ConnectionSet* ws_connections;
-	void RunWsServer();
-	void OnHttpRequest(connection_hdl hdl);	
-	void SendWsPayload(string payload);
+	void SendWebSocketPayload(string payload);
 	void OnWsOpen(connection_hdl hdl) { this->ws_connections->insert(hdl); }
 	void OnWsClose(connection_hdl hdl) { this->ws_connections->erase(hdl); }
 	
