@@ -11,6 +11,8 @@ bool firstCountdownHit = false;
 
 void SOS::onLoad() {
 	cvarManager->registerCvar("sos_state_flush_rate", "200", "Rate at which to send events to websocket (milliseconds)", true, true, 100.0f, true, 2000.0f, true).bindTo(update_cvar);
+	cvarManager->registerCvar("SOS_team_name_left", "Orange", "Set the left team's name. Changing this will send an event through the websocket server").addOnValueChanged([this](std::string str, CVarWrapper cvar) {CvarUpdateTeamNameLeft(cvar.getStringValue()); });
+	cvarManager->registerCvar("SOS_team_name_right", "Blue", "Set the right team's name. Changing this will send an event through the websocket server").addOnValueChanged([this](std::string str, CVarWrapper cvar) {CvarUpdateTeamNameRight(cvar.getStringValue()); });
 	cvarManager->registerNotifier("SOS_c_send_reset_teams_event", [this](std::vector<string> params) {CommandResetPlayerCards(); }, "Send a reset teams event to connected websockets", PERMISSION_ALL);
 	cvarManager->registerNotifier("SOS_c_send_reset_player_cards_event", [this](std::vector<string> params) {CommandResetPlayerCards(); }, "Send a reset player card event to connect websockets", PERMISSION_ALL);
 	cvarManager->registerNotifier("SOS_c_send_player_cards_force_update_event", [this](std::vector<string> params) {CommandPlayerCardsForceUpdate(); }, "Send new player data to fill player cards with", PERMISSION_ALL);
@@ -37,8 +39,22 @@ void SOS::HookMatchCreated(string eventName) {
 }
 
 void SOS::HookMatchEnded(string eventName) {
-	//No state
-	this->SendEvent("game:match_ended", "game_match_ended");
+	ServerWrapper server = gameWrapper->GetOnlineGame();
+	json::JSON winnerData;
+	winnerData["winner_team_num"] = NULL;
+	if (!server.IsNull()) {
+		TeamWrapper winner = server.GetMatchWinner();
+		winnerData["winner_team_num"] = winner.GetTeamNum();
+	}
+
+	this->SendEvent("game:match_ended", winnerData);
+}
+
+void SOS::CvarUpdateTeamNameLeft(string teamName) {
+	this->SendEvent("sos:team_name_update_left", teamName);
+}
+void SOS::CvarUpdateTeamNameRight(string teamName) {
+	this->SendEvent("sos:team_name_update_right", teamName);
 }
 
 void SOS::HookCountdownInit(string eventName) {

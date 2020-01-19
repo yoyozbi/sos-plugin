@@ -36,6 +36,8 @@ private:
 	void CommandResetTeamCards();
 	void CommandResetPlayerCards();
 	void CommandPlayerCardsForceUpdate();
+	void CvarUpdateTeamNameLeft(std::string str);
+	void CvarUpdateTeamNameRight(std::string str);
 	void WebsocketServerInit();
 	void WebsocketServerClose();
 

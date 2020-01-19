@@ -6,5 +6,8 @@ SOS - Overlay System
 7
 0|Force Update Player Cards|SOS_c_send_player_cards_force_update_event
 8
+12|Set Team Name Left|SOS_team_name_left
+12|Set Team Name Right|SOS_team_name_right
+8
 5|Rate at which to send events to websocket (milliseconds)|sos_state_flush_rate|100|2000
 9|Original dll code by gboddin, modified and extended by SimpleAOB
