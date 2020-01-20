@@ -1,10 +1,19 @@
 SOS - Overlay System
+1|Auto-join Spectator|SOS_autojoin_spectator
+8
+9|Best Of Series controls
+5|Number of games in this "Best Of" series|SOS_best_of_series_count|1|9
+5|Current series game number|SOS_best_of_series_current_game|1|9
+5|Left Team Games Won|SOS_best_of_series_games_won_left|0|5
+5|Right Team Games Won|SOS_best_of_series_games_won_right|0|5
+8
 9|Reset overlay components manually
 0|Reset Teams|SOS_c_send_reset_teams_event
 7
 0|Reset Player Cards|SOS_c_send_reset_player_cards_event
 7
 0|Force Update Player Cards|SOS_c_send_player_cards_force_update_event
+0|Reset Internal State|SOS_c_reset_internal_state
 8
 12|Set Team Name Left|SOS_team_name_left
 12|Set Team Name Right|SOS_team_name_right

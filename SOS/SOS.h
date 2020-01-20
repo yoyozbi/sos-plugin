@@ -23,7 +23,6 @@ public:
 	virtual void onUnload();
 private:
 	// Hook logic
-	void HookMatchStarted();
 	void HookMatchCreated(std::string eventName);
 	void HookMatchEnded(std::string eventName);
 	void HookCountdownInit(std::string eventName);
@@ -36,10 +35,22 @@ private:
 	void CommandResetTeamCards();
 	void CommandResetPlayerCards();
 	void CommandPlayerCardsForceUpdate();
+
 	void CvarUpdateTeamNameLeft(std::string str);
 	void CvarUpdateTeamNameRight(std::string str);
+
+	void CvarUpdateBestOfSeriesCount(int newCount);
+	void CvarUpdateBestOfCurrentGame(int currentGame);
+	void CvarUpdateBestOfGamesWonLeft(int winCount);
+	void CvarUpdateBestOfGamesWonRight(int winCount);
+
 	void WebsocketServerInit();
 	void WebsocketServerClose();
+
+	//SOS_best_of_series_count
+	//SOS_best_of_series_current_number
+	//SOS_best_of_series_games_won_left
+	//SOS_best_of_series_games_won_right
 
 	// Player state logic
 	ApiPlayer PlayersState[16];

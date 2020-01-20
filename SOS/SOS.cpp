@@ -7,25 +7,92 @@ using placeholders::_3;
 BAKKESMOD_PLUGIN(SOS, "SimpleRj Overlay System", "1.0.0", PLUGINTYPE_THREADED)
 
 std::shared_ptr<float> update_cvar = std::make_shared<float>(200.0f);
+std::shared_ptr<bool> autojoinSpectator_cvar = std::make_shared<bool>(false);
 bool firstCountdownHit = false;
+bool matchCreated = false;
 
 void SOS::onLoad() {
-	cvarManager->registerCvar("sos_state_flush_rate", "200", "Rate at which to send events to websocket (milliseconds)", true, true, 100.0f, true, 2000.0f, true).bindTo(update_cvar);
+	cvarManager->registerCvar("sos_state_flush_rate", "200", "Rate at which to send events to websocket (milliseconds)", true, true, 100.0f, true, 2000.0f).bindTo(update_cvar);
+	cvarManager->registerCvar("SOS_autojoin_spectator", "0", "Autojoin Spectator").bindTo(autojoinSpectator_cvar);
 	cvarManager->registerCvar("SOS_team_name_left", "Orange", "Set the left team's name. Changing this will send an event through the websocket server").addOnValueChanged([this](std::string str, CVarWrapper cvar) {CvarUpdateTeamNameLeft(cvar.getStringValue()); });
 	cvarManager->registerCvar("SOS_team_name_right", "Blue", "Set the right team's name. Changing this will send an event through the websocket server").addOnValueChanged([this](std::string str, CVarWrapper cvar) {CvarUpdateTeamNameRight(cvar.getStringValue()); });
+	cvarManager->registerCvar("SOS_best_of_series_count", "1", "Best of Series number (BO3, BO5...)", true, false, 0.0f, false, 0.0f, false).addOnValueChanged([this](std::string str, CVarWrapper cvar) {
+		int val = cvar.getIntValue();
+		if (val < 1) {
+			val = 1;
+		}
+		else if (val > 9) 
+		{
+			val = 9;
+		}
+		else if (val % 2 != 1)
+		{
+			val += 1;
+		}
+		if (val != cvar.getIntValue()) {
+			cvar.setValue(val);
+		}
+		CvarUpdateBestOfSeriesCount(cvar.getIntValue());
+	});
+	cvarManager->registerCvar("SOS_best_of_series_current_game", "1", "Best of Series current game number", true, false, 0.0f, false, 0.0f, false).addOnValueChanged([this](std::string str, CVarWrapper cvar) {
+		int val = cvar.getIntValue();
+		if (val < 1) {
+			val = 1;
+		}
+		else if (val > 9)
+		{
+			val = 9;
+		}
+		if (val != cvar.getIntValue()) {
+			cvar.setValue(val);
+		}
+		CvarUpdateBestOfCurrentGame(cvar.getIntValue());
+	});
+	cvarManager->registerCvar("SOS_best_of_series_games_won_left", "0", "Best of Series left team wins", true, false, 0.0f, false, 0.0f, false).addOnValueChanged([this](std::string str, CVarWrapper cvar) {
+		int val = cvar.getIntValue();
+		if (val < 0) {
+			val = 0;
+		}
+		else if (val > 9)
+		{
+			val = 9;
+		}
+		if (val != cvar.getIntValue()) {
+			cvar.setValue(val);
+		}
+		CvarUpdateBestOfGamesWonLeft(cvar.getIntValue());
+	});
+	cvarManager->registerCvar("SOS_best_of_series_games_won_right", "0", "Best of Series right team wins", true, false, 0.0f, false, 0.0f, false).addOnValueChanged([this](std::string str, CVarWrapper cvar) {
+		int val = cvar.getIntValue();
+		if (val < 0) {
+			val = 0;
+		}
+		else if (val > 9)
+		{
+			val = 9;
+		}
+		if (val != cvar.getIntValue()) {
+			cvar.setValue(val);
+		}
+		CvarUpdateBestOfGamesWonRight(cvar.getIntValue());
+	});
+
 	cvarManager->registerNotifier("SOS_c_send_reset_teams_event", [this](std::vector<string> params) {CommandResetPlayerCards(); }, "Send a reset teams event to connected websockets", PERMISSION_ALL);
 	cvarManager->registerNotifier("SOS_c_send_reset_player_cards_event", [this](std::vector<string> params) {CommandResetPlayerCards(); }, "Send a reset player card event to connect websockets", PERMISSION_ALL);
 	cvarManager->registerNotifier("SOS_c_send_player_cards_force_update_event", [this](std::vector<string> params) {CommandPlayerCardsForceUpdate(); }, "Send new player data to fill player cards with", PERMISSION_ALL);
+	cvarManager->registerNotifier("SOS_c_reset_internal_state", [this](std::vector<string> params) {
+		HookMatchEnded("match_ended");
+	}, "Reset internal state", PERMISSION_ALL);
 
 	//GAME TIME EVENTS
-	this->gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.WaitingForPlayers.EndState", std::bind(&SOS::HookMatchCreated, this, _1));
+	this->gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.WaitingForPlayers.BeginState", std::bind(&SOS::HookMatchCreated, this, _1));
 	this->gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.Countdown.BeginState", std::bind(&SOS::HookCountdownInit, this, _1));
 	this->gameWrapper->HookEventPost("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded", std::bind(&SOS::HookMatchEnded, this, _1));
 	this->gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.PodiumSpotlight.BeginState", std::bind(&SOS::HookPodiumStart, this, _1));
 	//this->gameWrapper->HookEventWithCallerPost<CarWrapper>("Function TAGame.Car_TA.EventDemolishedd", std::bind(&SOS::HookCarDemolished, this, _1, _2, _3));
 
 	//INGAME ACTIONS
-	this->gameWrapper->HookEventPost("Function TAGame.PRI_TA.PostBeginPlay", std::bind(&SOS::HookGameStarted, this, _1));
+	//this->gameWrapper->HookEventPost("Function TAGame.PRI_TA.PostBeginPlay", std::bind(&SOS::HookGameStarted, this, _1));
 	this->gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.PostGoalScored.BeginState", std::bind(&SOS::HookGoalScored, this, _1));
 
 	this->ws_connections = new ConnectionSet();
@@ -35,6 +102,7 @@ void SOS::onLoad() {
 
 void SOS::HookMatchCreated(string eventName) {
 	//No state
+	matchCreated = true;
 	this->SendEvent("game:match_created", "game_match_created");
 }
 
@@ -46,6 +114,8 @@ void SOS::HookMatchEnded(string eventName) {
 		TeamWrapper winner = server.GetMatchWinner();
 		winnerData["winner_team_num"] = winner.GetTeamNum();
 	}
+	matchCreated = false;
+	firstCountdownHit = false;
 
 	this->SendEvent("game:match_ended", winnerData);
 }
@@ -53,8 +123,33 @@ void SOS::HookMatchEnded(string eventName) {
 void SOS::CvarUpdateTeamNameLeft(string teamName) {
 	this->SendEvent("sos:team_name_update_left", teamName);
 }
+
 void SOS::CvarUpdateTeamNameRight(string teamName) {
 	this->SendEvent("sos:team_name_update_right", teamName);
+}
+
+void SOS::CvarUpdateBestOfSeriesCount(int newCount) {
+	json::JSON data;
+	data["new_count"] = newCount;
+	this->SendEvent("sos:best_of_series_count", data);
+}
+
+void SOS::CvarUpdateBestOfCurrentGame(int currentGame) {
+	json::JSON data;
+	data["current_game_num"] = currentGame;
+	this->SendEvent("sos:best_of_series_current_number", data);
+}
+
+void SOS::CvarUpdateBestOfGamesWonLeft(int winCount) {
+	json::JSON data;
+	data["win_count"] = winCount;
+	this->SendEvent("sos:best_of_series_games_won_left", data);
+}
+
+void SOS::CvarUpdateBestOfGamesWonRight(int winCount) {
+	json::JSON data;
+	data["win_count"] = winCount;
+	this->SendEvent("sos:best_of_series_games_won_right", data);
 }
 
 void SOS::HookCountdownInit(string eventName) {
@@ -68,6 +163,7 @@ void SOS::HookCountdownInit(string eventName) {
 		initData["teams"] = this->GetTeamsStateJson();
 
 		this->SendEvent("game:player_team_data", initData);
+		this->SendEvent("game:initialized", "initialized");
 	}
 	//No state
 	this->SendEvent("game:countdown_begin", "game_countdown_begin");
@@ -77,26 +173,6 @@ void SOS::HookPodiumStart(string eventName) {
 	//No state
 	this->SendEvent("game:podium_start", "game_podium_start");
 }
-
-void SOS::HookGameStarted(std::string eventName) {
-	firstCountdownHit = false;
-	this->ClearPlayersState();
-	this->ClearTeamsState();
-
-	this->SendEvent("game:initialized", "initialized");
-}
-
-//void SOS::HookCarDemolished(CarWrapper cw, void* params, std::string eventName) {
-//	if (cw.memory_address != NULL && cw.IsNull() == false) {
-//		this->SendEvent("game:car_demolished", "not null 1");
-//		if (cw.GetPRI().memory_address != NULL && cw.GetPRI().IsNull() == false) {
-//			this->SendEvent("game:car_demolished", "not null 2");
-//		}
-//	}
-//	//this->SendEvent("game:car_demolished", "not null 1");
-//	//this->SendEvent("game:car_demolished", std::to_string();
-//	//this->SendEvent("game:car_demolished", std::to_string(cw.GetPRI().GetUniqueId().ID));
-//}
 
 void SOS::HookGoalScored(std::string eventName) {
 	if (this->gameWrapper->IsInOnlineGame()) {
@@ -117,6 +193,19 @@ void SOS::UpdateGameState() {
 		this->UpdatePlayersState();
 		this->SendEvent("game:update_tick", this->GetPlayersStateJson());
 	}
+	
+	if (*autojoinSpectator_cvar && (matchCreated && !firstCountdownHit)) {
+		auto server = gameWrapper->GetOnlineGame();
+		if (!server.IsNull())
+		{
+			auto player = server.GetLocalPrimaryPlayer();
+			if (!player.IsNull())
+			{
+				player.Spectate();
+			}
+		}
+	}
+
 	// I'll be back
 	this->gameWrapper->SetTimeout(std::bind(&SOS::UpdateGameState, this), (*update_cvar)/1000.f*1.0001f);
 }
