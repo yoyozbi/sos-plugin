@@ -47,11 +47,6 @@ private:
 	void WebsocketServerInit();
 	void WebsocketServerClose();
 
-	//SOS_best_of_series_count
-	//SOS_best_of_series_current_number
-	//SOS_best_of_series_games_won_left
-	//SOS_best_of_series_games_won_right
-
 	// Player state logic
 	ApiPlayer PlayersState[16];
 	ApiPlayer CurrentPlayer;
