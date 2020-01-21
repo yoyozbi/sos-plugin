@@ -13,7 +13,7 @@ bool matchCreated = false;
 
 void SOS::onLoad() {
 	cvarManager->registerCvar("sos_state_flush_rate", "200", "Rate at which to send events to websocket (milliseconds)", true, true, 100.0f, true, 2000.0f).bindTo(update_cvar);
-	cvarManager->registerCvar("SOS_autojoin_spectator", "0", "Autojoin Spectator").bindTo(autojoinSpectator_cvar);
+	cvarManager->registerCvar("SOS_autojoin_spectator", "0", "Autojoin Spectator", true, false, 0.0f, false, 0.0f, false).bindTo(autojoinSpectator_cvar);
 	cvarManager->registerCvar("SOS_team_name_left", "Orange", "Set the left team's name. Changing this will send an event through the websocket server").addOnValueChanged([this](std::string str, CVarWrapper cvar) {CvarUpdateTeamNameLeft(cvar.getStringValue()); });
 	cvarManager->registerCvar("SOS_team_name_right", "Blue", "Set the right team's name. Changing this will send an event through the websocket server").addOnValueChanged([this](std::string str, CVarWrapper cvar) {CvarUpdateTeamNameRight(cvar.getStringValue()); });
 	cvarManager->registerCvar("SOS_best_of_series_count", "1", "Best of Series number (BO3, BO5...)", true, false, 0.0f, false, 0.0f, false).addOnValueChanged([this](std::string str, CVarWrapper cvar) {
