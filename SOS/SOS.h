@@ -47,6 +47,9 @@ private:
 	void WebsocketServerInit();
 	void WebsocketServerClose();
 
+	// SendKey Methods
+	void SendKeyH();
+
 	// Player state logic
 	ApiPlayer PlayersState[16];
 	ApiPlayer CurrentPlayer;

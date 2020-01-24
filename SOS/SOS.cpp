@@ -1,4 +1,7 @@
 #include "SOS.h"
+#include "windows.h"
+#include <ctime>
+
 using websocketpp::connection_hdl;
 using namespace std;
 using placeholders::_1;
@@ -187,6 +190,8 @@ void SOS::HookGoalScored(std::string eventName) {
 	}
 }
 
+std::time_t lastSendKeyTime = std::time(0);
+
 void SOS::UpdateGameState() {
 	if (this->gameWrapper->IsInOnlineGame()) {
 		this->ClearPlayersState();
@@ -201,7 +206,12 @@ void SOS::UpdateGameState() {
 			auto player = server.GetLocalPrimaryPlayer();
 			if (!player.IsNull())
 			{
-				player.Spectate();
+				std::time_t currentTime = std::time(0);
+				if ((currentTime - lastSendKeyTime) > 5) {
+					player.Spectate();
+					gameWrapper->SetTimeout(std::bind(&SOS::SendKeyH, this), 1.0f);
+					lastSendKeyTime = std::time(0);
+				}
 			}
 		}
 	}
@@ -374,4 +384,14 @@ void SOS::CommandResetTeamCards() {
 void SOS::CommandPlayerCardsForceUpdate() {
 	this->UpdatePlayersState();
 	this->SendEvent("sos:player_cards_force_update", this->GetPlayersStateJson());
+}
+
+void SOS::SendKeyH() {
+	HWND hWndTarget = FindWindowA(NULL, "Rocket League (32-bit, DX9, Cooked)");
+
+	if (SetForegroundWindow(hWndTarget))
+	{
+		keybd_event(0x48, 0, 0, 0);
+		keybd_event(0x48, 0, KEYEVENTF_KEYUP, 0);
+	}
 }
