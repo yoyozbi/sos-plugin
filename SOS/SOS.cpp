@@ -13,6 +13,7 @@ std::shared_ptr<float> update_cvar = std::make_shared<float>(200.0f);
 std::shared_ptr<bool> autojoinSpectator_cvar = std::make_shared<bool>(false);
 bool firstCountdownHit = false;
 bool matchCreated = false;
+bool isCurrentlySpectating = false;
 
 void SOS::onLoad() {
 	cvarManager->registerCvar("sos_state_flush_rate", "200", "Rate at which to send events to websocket (milliseconds)", true, true, 100.0f, true, 2000.0f).bindTo(update_cvar);
@@ -84,6 +85,9 @@ void SOS::onLoad() {
 	cvarManager->registerNotifier("SOS_c_send_reset_player_cards_event", [this](std::vector<string> params) {CommandResetPlayerCards(); }, "Send a reset player card event to connect websockets", PERMISSION_ALL);
 	cvarManager->registerNotifier("SOS_c_send_player_cards_force_update_event", [this](std::vector<string> params) {CommandPlayerCardsForceUpdate(); }, "Send new player data to fill player cards with", PERMISSION_ALL);
 	cvarManager->registerNotifier("SOS_c_reset_internal_state", [this](std::vector<string> params) {
+		firstCountdownHit = false;
+		matchCreated = false;
+		isCurrentlySpectating = false;
 		HookMatchEnded("match_ended");
 	}, "Reset internal state", PERMISSION_ALL);
 
@@ -119,6 +123,7 @@ void SOS::HookMatchEnded(string eventName) {
 	}
 	matchCreated = false;
 	firstCountdownHit = false;
+	isCurrentlySpectating = false;
 
 	this->SendEvent("game:match_ended", winnerData);
 }
@@ -204,10 +209,12 @@ void SOS::UpdateGameState() {
 		if (!server.IsNull())
 		{
 			auto player = server.GetLocalPrimaryPlayer();
-			if (!player.IsNull())
+
+			if (!player.IsNull() && !isCurrentlySpectating)
 			{
 				std::time_t currentTime = std::time(0);
 				if ((currentTime - lastSendKeyTime) > 5) {
+					isCurrentlySpectating = true;
 					player.Spectate();
 					gameWrapper->SetTimeout(std::bind(&SOS::SendKeyH, this), 1.0f);
 					lastSendKeyTime = std::time(0);
