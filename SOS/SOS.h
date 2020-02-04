@@ -41,6 +41,7 @@ private:
 
 	void CvarUpdateBestOfSeriesCount(int newCount);
 	void CvarUpdateBestOfCurrentGame(int currentGame);
+	void CvarUpdateBestOfSeriesNumber(int currentGame);
 	void CvarUpdateBestOfGamesWonLeft(int winCount);
 	void CvarUpdateBestOfGamesWonRight(int winCount);
 

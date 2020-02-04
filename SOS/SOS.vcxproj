@@ -162,6 +162,7 @@
   <ItemGroup>
     <None Include="..\goals.html" />
     <None Include="..\README.md" />
+    <None Include="..\Release\SOS.dll" />
     <None Include="..\sos.set" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -29,10 +29,6 @@ void SOS::onLoad() {
 		{
 			val = 9;
 		}
-		else if (val % 2 != 1)
-		{
-			val += 1;
-		}
 		if (val != cvar.getIntValue()) {
 			cvar.setValue(val);
 		}
@@ -46,6 +42,20 @@ void SOS::onLoad() {
 		else if (val > 9)
 		{
 			val = 9;
+		}
+		if (val != cvar.getIntValue()) {
+			cvar.setValue(val);
+		}
+		CvarUpdateBestOfCurrentGame(cvar.getIntValue());
+	});
+	cvarManager->registerCvar("SOS_best_of_series_number", "1", "Current series number", true, false, 0.0f, false, 0.0f, false).addOnValueChanged([this](std::string str, CVarWrapper cvar) {
+		int val = cvar.getIntValue();
+		if (val < 1) {
+			val = 1;
+		}
+		else if (val > 25)
+		{
+			val = 25;
 		}
 		if (val != cvar.getIntValue()) {
 			cvar.setValue(val);
@@ -119,7 +129,9 @@ void SOS::HookMatchEnded(string eventName) {
 	winnerData["winner_team_num"] = NULL;
 	if (!server.IsNull()) {
 		TeamWrapper winner = server.GetMatchWinner();
-		winnerData["winner_team_num"] = winner.GetTeamNum();
+		if (!winner.IsNull()) {
+			winnerData["winner_team_num"] = winner.GetTeamNum();
+		}
 	}
 	matchCreated = false;
 	firstCountdownHit = false;
@@ -148,6 +160,12 @@ void SOS::CvarUpdateBestOfCurrentGame(int currentGame) {
 	this->SendEvent("sos:best_of_series_current_number", data);
 }
 
+void SOS::CvarUpdateBestOfSeriesNumber(int currentSeries) {
+	json::JSON data;
+	data["series_number"] = currentSeries;
+	this->SendEvent("sos:best_of_series_number", data);
+}
+
 void SOS::CvarUpdateBestOfGamesWonLeft(int winCount) {
 	json::JSON data;
 	data["win_count"] = winCount;
@@ -161,20 +179,26 @@ void SOS::CvarUpdateBestOfGamesWonRight(int winCount) {
 }
 
 void SOS::HookCountdownInit(string eventName) {
+	json::JSON initData;
 	if (!firstCountdownHit && gameWrapper->IsInOnlineGame()) {
 		firstCountdownHit = true;
 		this->UpdatePlayersState();
 		this->UpdateTeamsState();
 
-		json::JSON initData;
-		initData["players"] = this->GetPlayersStateJson();
 		initData["teams"] = this->GetTeamsStateJson();
+		initData["players"] = this->GetPlayersStateJson();
 
 		this->SendEvent("game:player_team_data", initData);
 		this->SendEvent("game:initialized", "initialized");
 	}
+	if (firstCountdownHit && gameWrapper->IsInOnlineGame()) {
+		this->UpdateTeamsState();
+		initData["teams"] = this->GetTeamsStateJson();
+		this->SendEvent("game:team_data", initData);
+	}
 	//No state
-	this->SendEvent("game:countdown_begin", "game_countdown_begin");
+	this->SendEvent("game:pre_countdown_begin", "pre_game_countdown_begin");
+	this->SendEvent("game:post_countdown_begin", "post_game_countdown_begin");
 }
 
 void SOS::HookPodiumStart(string eventName) {

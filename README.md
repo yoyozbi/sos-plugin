@@ -27,7 +27,8 @@ The websocket reports the following events in `channel:event` format:
 
 ```
 "game": [
-    "countdown_begin": [Stateless],
+    "pre_countdown_begin": [Stateless],
+    "post_countdown_begin": [Stateless],
     "goal_scored" [Object of scorer Player state],
     "initialized": [Stateless],
     "match_created": [Stateless],

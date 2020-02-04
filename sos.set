@@ -2,10 +2,11 @@ SOS - Overlay System
 1|Auto-join Spectator|SOS_autojoin_spectator
 8
 9|Best Of Series controls
-5|Number of games in this "Best Of" series|SOS_best_of_series_count|1|9
-5|Current series game number|SOS_best_of_series_current_game|1|9
-5|Left Team Games Won|SOS_best_of_series_games_won_left|0|5
-5|Right Team Games Won|SOS_best_of_series_games_won_right|0|5
+5|Number of games in this "Best Of" series|SOS_best_of_series_count|1|10
+5|Current series game number|SOS_best_of_series_current_game|1|10
+5|Current series number|SOS_best_of_series_number|1|25
+5|Left Team Games Won|SOS_best_of_series_games_won_left|0|10
+5|Right Team Games Won|SOS_best_of_series_games_won_right|0|10
 8
 9|Reset overlay components manually
 0|Reset Teams|SOS_c_send_reset_teams_event
