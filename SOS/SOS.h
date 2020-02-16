@@ -29,22 +29,11 @@ private:
 	void HookGameStarted(std::string eventName);
 	void HookPodiumStart(std::string eventName);
 	void HookGoalScored(std::string eventName);
+	void HookReplayStart(std::string eventName);
+	void HookReplayEnd(std::string eventName);
+	void HookReplayWillEnd(std::string eventName);
 	void HookCarDemolished(CarWrapper cw, void* params, std::string eventName);
 	
-	//Commands
-	void CommandResetTeamCards();
-	void CommandResetPlayerCards();
-	void CommandPlayerCardsForceUpdate();
-
-	void CvarUpdateTeamNameLeft(std::string str);
-	void CvarUpdateTeamNameRight(std::string str);
-
-	void CvarUpdateBestOfSeriesCount(int newCount);
-	void CvarUpdateBestOfCurrentGame(int currentGame);
-	void CvarUpdateBestOfSeriesNumber(int currentGame);
-	void CvarUpdateBestOfGamesWonLeft(int winCount);
-	void CvarUpdateBestOfGamesWonRight(int winCount);
-
 	void WebsocketServerInit();
 	void WebsocketServerClose();
 
@@ -113,5 +102,15 @@ private:
 		else {
 			return NULL;
 		}
+	}
+
+	std::string UnrealColorToString(UnrealColor uc);
+
+	template <typename T>
+	inline std::string int_to_hex(T val, size_t width = sizeof(T) * 2)
+	{
+		std::stringstream ss;
+		ss << std::setfill('0') << std::setw(width) << std::hex << (val | 0);
+		return ss.str();
 	}
 };
