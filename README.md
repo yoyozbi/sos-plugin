@@ -27,26 +27,18 @@ The websocket reports the following events in `channel:event` format:
 
 ```
 "game": [
-    "pre_countdown_begin": [Stateless],
-    "post_countdown_begin": [Stateless],
     "goal_scored" [Object of scorer Player state],
     "initialized": [Stateless],
     "match_created": [Stateless],
     "match_ended": [Object of winnerTeamNumber],
     "player_team_data": [Object of Player and Team state arrays],
     "podium_start": [Stateless],
-    "update_tick": [Object of Player and Team state arrays]
-],
-"sos": [
-    "best_of_series_count": [Object of new bestOfSeriesCount],
-    "best_of_series_current_number": [Object of new bestOfSeriesCurrentNumber],
-    "best_of_series_games_won_left": [Object of new winCountLeft],
-    "best_of_series_games_won_right": [Object of new winCountRight],
-    "player_cards_force_update": [Array of Player states],
-    "reset_player_cards": [Stateless],
-    "reset_team_cards": [Stateless],
-    "team_name_update_left": [String newTeamName],
-    "team_name_update_right": [String newTeamName]
+    "post_countdown_begin": [Stateless],
+    "pre_countdown_begin": [Stateless],
+    "replay_end": [Stateless],
+    "replay_start": [Stateless],
+    "replay_will_end": [Stateless],
+    "update_tick": [Object of Player and Team state arrays],
 ]
 ```
 Stateless means that the event has no useful information attached. It sends a string containing the name of the event
