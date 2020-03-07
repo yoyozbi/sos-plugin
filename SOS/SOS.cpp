@@ -25,6 +25,7 @@ void SOS::onLoad() {
 		firstCountdownHit = false;
 		matchCreated = false;
 		isCurrentlySpectating = false;
+		isInReplay = false;
 		HookMatchEnded("match_ended");
 	}, "Reset internal state", PERMISSION_ALL);
 
@@ -48,6 +49,15 @@ void SOS::onLoad() {
 }
 
 void SOS::HookMatchCreated(string eventName) {
+	//if (matchCreated) {
+	//	HookMatchEnded("match_ended");
+	//}
+	//firstCountdownHit = false;
+	//matchCreated = false;
+	//isCurrentlySpectating = false;
+	//isInReplay = false;
+	
+	
 	//No state
 	matchCreated = true;
 	this->SendEvent("game:match_created", "game_match_created");
@@ -152,10 +162,10 @@ void SOS::HookGoalScored(std::string eventName) {
 }
 
 void SOS::UpdateGameState() {
-	if (this->gameWrapper->IsInOnlineGame()) {
+	if (this->gameWrapper->IsInOnlineGame() && firstCountdownHit) {
 		this->ClearPlayersState();
 		this->UpdatePlayersState();
-		this->SendEvent("game:update_tick", this->GetPlayersStateJson());
+		//this->SendEvent("game:update_tick", this->GetPlayersStateJson());
 	}
 	
 	//if (*autojoinSpectator_cvar && (matchCreated && !firstCountdownHit)) {
