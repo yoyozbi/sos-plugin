@@ -41,7 +41,8 @@ void SOS::onLoad() {
 
 	//INGAME ACTIONS
 	//this->gameWrapper->HookEventPost("Function TAGame.PRI_TA.PostBeginPlay", std::bind(&SOS::HookGameStarted, this, _1));
-	this->gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.PostGoalScored.BeginState", std::bind(&SOS::HookGoalScored, this, _1));
+	//this->gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.PostGoalScored.BeginState", std::bind(&SOS::HookGoalScored, this, _1));
+	this->gameWrapper->HookEventPost("Function TAGame.ArenaSoundManager_TA.PlayGoalScoredSounds", std::bind(&SOS::HookGoalScored, this, _1));
 
 	this->ws_connections = new ConnectionSet();
 	this->UpdateGameState();
@@ -56,7 +57,6 @@ void SOS::HookMatchCreated(string eventName) {
 	//matchCreated = false;
 	//isCurrentlySpectating = false;
 	//isInReplay = false;
-	
 	
 	//No state
 	matchCreated = true;
@@ -87,6 +87,7 @@ void SOS::HookMatchEnded(string eventName) {
 	json::JSON winnerData;
 	winnerData["winner_team_num"] = NULL;
 	this->UpdateTeamsState();
+	this->UpdatePlayersState();
 	winnerData["team_state"] = this->GetTeamsStateJson();
 	if (!server.IsNull()) {
 		TeamWrapper winner = server.GetMatchWinner();
@@ -99,12 +100,14 @@ void SOS::HookMatchEnded(string eventName) {
 	isCurrentlySpectating = false;
 
 	this->SendEvent("game:match_ended", winnerData);
+	this->SendEvent("game:all_players_data_update", this->GetPlayersStateJson());
 }
 
 void SOS::HookCountdownInit(string eventName) {
 	json::JSON initData;
 	if (!firstCountdownHit && gameWrapper->IsInOnlineGame()) {
 		firstCountdownHit = true;
+		this->ClearPlayersState();
 		this->UpdatePlayersState();
 		this->UpdateTeamsState();
 
@@ -149,13 +152,15 @@ void SOS::HookReplayWillEnd(string eventName) {
 }
 
 void SOS::HookGoalScored(std::string eventName) {
+	this->SendEvent("game:goal_scored", "game_goal_scored");
 	if (this->gameWrapper->IsInOnlineGame()) {
 		ArrayWrapper<PriWrapper> players = this->gameWrapper->GetOnlineGame().GetPRIs();
 		for (int a = 0; a < players.Count(); a++ ) {
 			if (!this->PlayersState[a].Dirty && this->PlayersState[a].Goals < players.Get(a).GetMatchGoals()) {
 				this->UpdatePlayersState();
 				this->UpdateTeamsState();
-				this->SendEvent("game:goal_scored", this->PlayersState[a]);
+				this->SendEvent("game:goal_scored_player_data", this->PlayersState[a]);
+				this->SendEvent("game:all_players_data_update", this->GetPlayersStateJson());
 			}
 		}
 	}
