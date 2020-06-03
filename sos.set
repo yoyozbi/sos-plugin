@@ -1,6 +1,4 @@
 SOS - Overlay System
-1|Auto-join Spectator|SOS_autojoin_spectator
-8
 0|Reset Internal State|SOS_c_reset_internal_state
 8
 5|Rate at which to send events to websocket (milliseconds)|sos_state_flush_rate|100|2000

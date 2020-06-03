@@ -40,4 +40,22 @@ public:
 		json_player["TeamNum"] = TeamNum;
 		return json_player;
 	};
+
+	ApiPlayer() {
+		IsBot = false;
+		CurrentBoostAmount = 0.0;
+		MMR = 0.0;
+		Ping = 0.0;
+		Assists = 0;
+		BallTouches = 0;
+		Demolishes = 0;
+		Goals = 0;
+		Kills = 0;
+		PlayerID = 0;
+		Saves = 0;
+		Score = 0;
+		Shots = 0;
+		TeamNum = 0;
+		PlayerName = "";
+	}
 };

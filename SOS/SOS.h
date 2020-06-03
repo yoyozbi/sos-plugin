@@ -6,111 +6,82 @@
 #define _WEBSOCKETPP_CPP11_TYPE_TRAITS_
 #include "websocketpp/config/asio_no_tls.hpp"
 #include "websocketpp/server.hpp"
+
 #include "json.hpp"
-#include "ApiPlayer.h"
-#include "ApiTeam.h"
-#include "ApiGame.h"
+
 #include "bakkesmod/plugin/bakkesmodplugin.h"
+
 using websocketpp::connection_hdl;
 
 class SOS : public BakkesMod::Plugin::BakkesModPlugin
 {
-	typedef websocketpp::server<websocketpp::config::asio> SOSServer;
+	typedef websocketpp::server<websocketpp::config::asio> PluginServer;
 	typedef std::set<connection_hdl, std::owner_less<connection_hdl>> ConnectionSet;
 
 public:
 	virtual void onLoad();
 	virtual void onUnload();
+
 private:
-	// Hook logic
-	void HookMatchCreated(std::string eventName);
-	void HookMatchEnded(std::string eventName);
-	void HookCountdownInit(std::string eventName);
-	void HookGameStarted(std::string eventName);
-	void HookPodiumStart(std::string eventName);
-	void HookGoalScored(std::string eventName);
-	void HookReplayStart(std::string eventName);
-	void HookReplayEnd(std::string eventName);
-	void HookReplayWillEnd(std::string eventName);
-	void HookCarDemolished(CarWrapper cw, void* params, std::string eventName);
-	
-	void WebsocketServerInit();
-	void WebsocketServerClose();
+	/* CVARS */
+	std::shared_ptr<bool> enabled;
+	std::shared_ptr<int> port;
 
-	// SendKey Methods
-	void SendKeyH();
+	/* FLOAT TIME ASSETS */
+	std::chrono::steady_clock::time_point timeSnapshot;
+	bool isClockPaused = false;
+	bool newRoundActive = false;
+	bool waitingForOvertimeToStart = false;
+	void EnabledChanged();
 
-	// Player state logic
-	ApiPlayer PlayersState[16];
-	ApiPlayer CurrentPlayer;
-	void UpdatePlayersState();
-	void ClearPlayersState();
-	json::JSON GetPlayersStateJson();
+	/* ORIGINAL SOS VARIABLES */
+	std::shared_ptr<float> update_cvar;
+	bool firstCountdownHit = false;
+	bool matchCreated = false;
+	bool isCurrentlySpectating = false;
+	bool isInReplay = false;
 
-	// Team state logic
-	ApiTeam TeamsState[4];
-	void UpdateTeamsState();
-	void ClearTeamsState();
-	json::JSON GetTeamsStateJson();
+	/* ORIGINAL SOS HOOKS */
+	void HookBallExplode();
+	void HookMatchCreated();
+	void HookMatchEnded();
+	void HookCountdownInit();
+	void HookPodiumStart();
+	void HookGoalScored();
+	void HookReplayStart();
+	void HookReplayEnd();
+	void HookReplayWillEnd();
 
-	// Game state logic
-	ApiGame GameState;
-	void UpdateGameState();
-	void ClearGameState();
-	json::JSON GetGameStateJson();
-
-	// Event logic
-	void SendEvent(string eventName, ApiGame game);
-	void SendEvent(string eventName, ApiPlayer player);
-	//void SendEvent(string eventName, string testString);
+	/* SEND EVENTS */
 	void SendEvent(string eventName, json::JSON jsawn);
-	//void SendEvent(string eventName, ApiPlayer player, ApiTeam team);
-	//void SendEvent(string eventName, ApiPlayer player[], ApiTeam team[]);
-	
-	// Server logic
-	SOSServer* ws_server;
+	//void SendEvent(string eventName, ApiGame game);
+	//void SendEvent(string eventName, ApiPlayer player);
+
+	/* MAIN FUNCTION */
+	void UpdateGameState();
+
+	/* INDIVIDUAL FUNCTIONS */
+	void GetPlayerInfo(json::JSON& state, PriWrapper pri);
+	void GetTeamInfo(json::JSON& state, ServerWrapper server);
+	void GetGameTimeInfo(json::JSON& state, ServerWrapper server);
+	void GetBallInfo(json::JSON& state, ServerWrapper server);
+	void GetWinnerInfo(json::JSON& state, ServerWrapper server);
+	void GetCameraInfo(json::JSON& state);
+
+	/* TIME UPDATING CODE */
+	void UpdateClock();
+	void PauseClockOnGoal();
+	void UnpauseClockOnBallTouch();
+	void PauseClockOnOvertimeStarted();
+
+	/* WEBSOCKET CODE */
+	PluginServer* ws_server;
 	ConnectionSet* ws_connections;
+	void RunWsServer();
+	void OnHttpRequest(connection_hdl hdl);
+	//void SendWsPayload(string payload);
 	void SendWebSocketPayload(string payload);
+	void OnWsMsg(connection_hdl hdl, PluginServer::message_ptr msg);
 	void OnWsOpen(connection_hdl hdl) { this->ws_connections->insert(hdl); }
 	void OnWsClose(connection_hdl hdl) { this->ws_connections->erase(hdl); }
-	
-	// Generic game type helper
-	enum GAMETYPE {
-		GAMETYPE_REPLAY = 0,
-		GAMETYPE_ONLINE = 1,
-		GAMETYPE_FREEPLAY = 2,
-		GAMETYPE_TRAINING = 3,
-		GAMETYPE_SPECTATE = 4,
-		GAMETYPE_MENU = 5
-	};
-	ServerWrapper* GetCurrentGameType() {
-		if (gameWrapper->IsInReplay()) {
-			return &this->gameWrapper->GetGameEventAsReplay();
-		}
-		else if (gameWrapper->IsInOnlineGame()) {
-			return &this->gameWrapper->GetOnlineGame();
-		}
-		else if (gameWrapper->IsInFreeplay()) {
-			return &this->gameWrapper->GetGameEventAsServer();
-		}
-		else if (gameWrapper->IsInCustomTraining()) {
-			return &this->gameWrapper->GetGameEventAsServer();
-		}
-		else if (gameWrapper->IsSpectatingInOnlineGame()) {
-			return &this->gameWrapper->GetOnlineGame();
-		}
-		else {
-			return NULL;
-		}
-	}
-
-	std::string UnrealColorToString(UnrealColor uc);
-
-	template <typename T>
-	inline std::string int_to_hex(T val, size_t width = sizeof(T) * 2)
-	{
-		std::stringstream ss;
-		ss << std::setfill('0') << std::setw(width) << std::hex << (val | 0);
-		return ss.str();
-	}
 };

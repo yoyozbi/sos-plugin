@@ -159,10 +159,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClInclude Include="ApiPlayer.h" />
-    <ClInclude Include="ApiTeam.h" />
     <ClInclude Include="SOS.h" />
-    <ClInclude Include="ApiGame.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="SOS.cpp" />
