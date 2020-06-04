@@ -7,11 +7,9 @@ using placeholders::_2;
 
 
 /*
-
-	This is a tweaked version of DanMB's GameStateApi: https://github.com/DanMB/GameStateApi
-	A lot of features merged in from the original SOS plugin: https://gitlab.com/bakkesplugins/sos/sos-plugin
-	Tweaked by CinderBlock for version 1.0.1
-
+    This is a tweaked version of DanMB's GameStateApi: https://github.com/DanMB/GameStateApi
+    A lot of features merged in from the original SOS plugin: https://gitlab.com/bakkesplugins/sos/sos-plugin
+    Tweaked by CinderBlock for version 1.0.1
 */
 
 
@@ -55,10 +53,9 @@ void SOS::onLoad()
 	gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.PodiumSpotlight.BeginState", std::bind(&SOS::HookPodiumStart, this));
 	gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.ReplayPlayback.BeginState", std::bind(&SOS::HookReplayStart, this));
 	gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.ReplayPlayback.EndState", std::bind(&SOS::HookReplayEnd, this));
-	//gameWrapper->HookEventPost("Function TAGame.Ball_TA.Explode", std::bind(&SOS::HookReplayWillEnd, this));
-	//gameWrapper->HookEventPost("Function TAGame.Ball_TA.Explode", std::bind(&SOS::HookGoalScored, this));
-	//gameWrapper->HookEventPost("Function TAGame.PitchTekDrawingComponent_TA.QueueGoalExplosionDecal", std::bind(&SOS::HookReplayWillEnd, this));
-	//gameWrapper->HookEventPost("Function TAGame.ArenaSoundManager_TA.PlayGoalScoredSounds", std::bind(&SOS::HookGoalScored, this));
+
+	//EVENT FEED
+	gameWrapper->HookEventWithCaller<ServerWrapper>("Function TAGame.GFxHUD_TA.HandleStatTickerMessage", std::bind(&SOS::OnStatEvent, this, _1, _2));
 
 	//Run websocket server
 	ws_connections = new ConnectionSet();
@@ -234,16 +231,6 @@ void SOS::UpdateGameState()
 	{
 		SendEvent("game:update_state", state);
 	}
-
-
-	//string output = "";
-	//output += "isClockPaused(" + to_string(isClockPaused) + ") ";
-	//output += "newRoundActive(" + to_string(newRoundActive) + ") ";
-	//output += "firstCountdownHit(" + to_string(firstCountdownHit) + ") ";
-	//output += "matchCreated(" + to_string(matchCreated) + ") ";
-	//output += "isCurrentlySpectating(" + to_string(isCurrentlySpectating) + ") ";
-	//output += "isInReplay(" + to_string(isInReplay) + ") ";
-	//cvarManager->log(output);
 }
 
 /* INDIVIDUAL FUNCTIONS */
@@ -519,6 +506,25 @@ void SOS::PauseClockOnOvertimeStarted()
 	waitingForOvertimeToStart = true;
 }
 
+/* IN GAME EVENTS FEED CODE */
+void SOS::OnStatEvent(ServerWrapper caller, void* args) {
+	auto tArgs = (DummyStatEventContainer*)args;
+
+	auto victim = PriWrapper(tArgs->Victim);
+	auto receiver = PriWrapper(tArgs->Receiver);
+	std::string victimName = victim.IsNull() ? "" : victim.GetPlayerName().ToString();
+	std::string receiverName = receiver.IsNull() ? "" : receiver.GetPlayerName().ToString();
+
+	std::wstring ws(tArgs->StatEvent->Label);
+	std::string eventStr = std::string(ws.begin(), ws.end());
+
+	json::JSON statfeed;
+	statfeed["type"] = eventStr;
+	statfeed["main_target"] = receiverName;
+	statfeed["secondary_target"] = victimName;
+
+	SendEvent("game:statfeed_event", statfeed);
+}
 
 /* WEBSOCKET CODE */
 void SOS::RunWsServer()

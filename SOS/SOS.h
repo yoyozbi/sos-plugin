@@ -74,6 +74,19 @@ private:
 	void UnpauseClockOnBallTouch();
 	void PauseClockOnOvertimeStarted();
 
+	void OnStatEvent(ServerWrapper caller, void* args);
+	struct DummyStatEvent {
+		char pad[144];
+		wchar_t* Label;
+	};
+
+	struct DummyStatEventContainer
+	{
+		uintptr_t Receiver;
+		uintptr_t Victim;
+		class DummyStatEvent* StatEvent;
+	};
+
 	/* WEBSOCKET CODE */
 	PluginServer* ws_server;
 	ConnectionSet* ws_connections;
@@ -84,4 +97,14 @@ private:
 	void OnWsMsg(connection_hdl hdl, PluginServer::message_ptr msg);
 	void OnWsOpen(connection_hdl hdl) { this->ws_connections->insert(hdl); }
 	void OnWsClose(connection_hdl hdl) { this->ws_connections->erase(hdl); }
+
+
+	// Helpers because Simple is bad at coding and organizing
+	std::string& replace(std::string& s, const std::string& from, const std::string& to)
+	{
+		if (!from.empty())
+			for (size_t pos = 0; (pos = s.find(from, pos)) != std::string::npos; pos += to.size())
+				s.replace(pos, from.size(), to);
+		return s;
+	}
 };
