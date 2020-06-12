@@ -28,6 +28,7 @@ private:
 	std::shared_ptr<int> port;
 
 	/* FLOAT TIME ASSETS */
+	float diff = 0;
 	std::chrono::steady_clock::time_point timeSnapshot;
 	bool isClockPaused = false;
 	bool newRoundActive = false;

@@ -9,8 +9,10 @@ using placeholders::_2;
 /*
     This is a tweaked version of DanMB's GameStateApi: https://github.com/DanMB/GameStateApi
     A lot of features merged in from the original SOS plugin: https://gitlab.com/bakkesplugins/sos/sos-plugin
-    Tweaked by CinderBlock for version 1.0.1
-*/
+    
+	- Tweaked by CinderBlock for version 1.0.1
+	- Thanks to Martinn for the Stat Feed code (and inadvertently, demolitions)
+	*/
 
 
 #define SHOULDLOG 0
@@ -96,7 +98,9 @@ void SOS::HookBallExplode()
 void SOS::HookMatchCreated()
 {
 	//No state
+	isClockPaused = true;
 	matchCreated = true;
+	diff = 0;
 	SendEvent("game:match_created", "game_match_created");
 }
 void SOS::HookMatchEnded()
@@ -105,6 +109,7 @@ void SOS::HookMatchEnded()
 	matchCreated = false;
 	firstCountdownHit = false;
 	isCurrentlySpectating = false;
+	isClockPaused = true;
 
 	json::JSON winnerData;
 	winnerData["winner_team_num"] = NULL;
@@ -189,7 +194,10 @@ void SOS::UpdateGameState()
 
 	static steady_clock::time_point lastCallTime = steady_clock::now();
 	float timeSinceLastCall = duration_cast<duration<float>>(steady_clock::now() - lastCallTime).count();
-	if (timeSinceLastCall < (*update_cvar / 1000.f)) { return; }
+	if (timeSinceLastCall < (*update_cvar / 1000.f)) {
+		//cvarManager->log("Too early to send update");
+		return;
+	}
 	lastCallTime = steady_clock::now();
 
 	json::JSON state;
@@ -199,29 +207,49 @@ void SOS::UpdateGameState()
 
 	bool isInGame = false;
 
-	if (gameWrapper->IsInOnlineGame() && gameWrapper->GetLocalCar().IsNull() && !gameWrapper->GetOnlineGame().IsNull())
-	{
-		ServerWrapper server = gameWrapper->GetOnlineGame();
-		if (server.GetPlaylist().GetPlaylistId() == 6)
-		{
-			isInGame = true;
+	if (gameWrapper->IsInOnlineGame()) {
+		//cvarManager->log("IsInOnlineGame: (need true) true");
+		if (gameWrapper->GetLocalCar().IsNull()) {
+			//cvarManager->log("GetLocalCar().IsNull(): (need true) true");
+			if (!gameWrapper->GetOnlineGame().IsNull()) {
+				//cvarManager->log("GetOnlineGame().IsNull(): (need false) false");
+				ServerWrapper server = gameWrapper->GetOnlineGame();
+				if (server.GetPlaylist().GetPlaylistId() == 6)
+				{
+					isInGame = true;
+					//cvarManager->log("isInGame: (need true) true");
 
-			ArrayWrapper<PriWrapper> PRIs = server.GetPRIs();
-			for (int i = 0; i < PRIs.Count(); ++i)
-			{
-				PriWrapper pri = PRIs.Get(i);
-				if (pri.IsNull()) { continue; }
-				if (pri.IsSpectator() || pri.GetTeamNum() == 255) { continue; }
+					ArrayWrapper<PriWrapper> PRIs = server.GetPRIs();
+					for (int i = 0; i < PRIs.Count(); ++i)
+					{
+						PriWrapper pri = PRIs.Get(i);
+						if (pri.IsNull()) { continue; }
+						if (pri.IsSpectator() || pri.GetTeamNum() == 255) { continue; }
 
-				GetPlayerInfo(state, pri);
+						GetPlayerInfo(state, pri);
+					}
+
+					GetTeamInfo(state, server);
+					GetGameTimeInfo(state, server);
+					GetBallInfo(state, server);
+					GetWinnerInfo(state, server);
+					GetCameraInfo(state);
+				}
+				else {
+					//cvarManager->log("isInGame: (need true) false");
+				}
 			}
-
-			GetTeamInfo(state, server);
-			GetGameTimeInfo(state, server);
-			GetBallInfo(state, server);
-			GetWinnerInfo(state, server);
-			GetCameraInfo(state);
+			else {
+				//cvarManager->log("GetOnlineGame().IsNull(): (need false) false");
+			}
 		}
+		else {
+			//cvarManager->log("GetLocalCar().IsNull(): (need true) false");
+		}
+	}
+	else 
+	{
+		//cvarManager->log("IsInOnlineGame: (need true) false");
 	}
 
 	state["hasGame"] = isInGame;
@@ -230,6 +258,9 @@ void SOS::UpdateGameState()
 	if (isInGame)
 	{
 		SendEvent("game:update_state", state);
+	}
+	else {
+		cvarManager->log("No Game");
 	}
 }
 
@@ -277,11 +308,6 @@ void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
 		PriWrapper att = car.GetAttackerPRI(); // Attacker is only set on local player???
 		if (!att.IsNull())
 		{
-			/*CarWrapper attCar = att.GetCar();
-			if (!attCar.IsNull())
-			{
-				cvarManager->log("[Attacker] can be demoed: " + std::to_string(attCar.CanDemolish(car)));
-			}*/
 			string attName = att.GetPlayerName().IsNull() ? "" : att.GetPlayerName().ToString();
 			state["players"][id]["attacker"] = attName + "_" + std::to_string(att.GetSpectatorShortcut());
 		}
@@ -342,7 +368,6 @@ void SOS::GetGameTimeInfo(json::JSON& state, ServerWrapper server)
 {
 	//Get the time difference between now and the last time the clock was updated (in UpdateClock() hook)
 	//Use a static float so that the diff remains the same value if the clock is paused
-	static float diff = 0;
 	if (!isClockPaused)
 	{
 		diff = duration_cast<duration<float>>(steady_clock::now() - timeSnapshot).count();
@@ -359,7 +384,7 @@ void SOS::GetGameTimeInfo(json::JSON& state, ServerWrapper server)
 	if (floatTime < 0 || waitingForOvertimeToStart) floatTime = 0;
 
 	//Store time in json
-	state["game"]["time"] = floatTime;
+	state["game"]["time"] = !firstCountdownHit ? 300.f : (bool)server.GetbOverTime() ? server.GetSecondsRemaining() : floatTime;
 	state["game"]["isOT"] = (bool)server.GetbOverTime();
 
 
