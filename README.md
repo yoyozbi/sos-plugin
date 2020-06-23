@@ -1,10 +1,15 @@
 # SOS Overlay System
 SOS-Plugin aims to provide an easy to use event relay in use for OBS streams, particularily in the Tournament sector. Personal streams are able to use this, but it is not officially supported at this moment.
 
-Also provided is a base that can be compiled and used in OBS:
-https://gitlab.com/bakkesplugins/sos/sos-obs-base
+Want some real life examples? Check out the `Codename: COVERT` assets:
+https://gitlab.com/bakkesplugins/sos/codename-covert
 
-- Demo video(s) coming soon
+**SOS has been used by the following productions**
+- Codename: COVERT by iDazerin
+- Disconnect's 3v3 monthly tournaments
+- Minor League Esports
+- Rocket Soccar Confederation
+- Women's Car Ball Championships by CrimsonGaming
 
 ## BakkesMod SDK Setup
 The solution contains $(BAKKESMODSDK) environment variable references for the SDK. Create your own environment variable (use Google) point to the SDK base and the configuration will handle the rest
