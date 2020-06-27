@@ -1,5 +1,5 @@
 #pragma once
-#pragma comment( lib, "BakkesMod.lib" )
+#pragma comment( lib, "pluginsdk.lib" )
 
 #include <set>
 #define ASIO_STANDALONE
@@ -54,7 +54,7 @@ private:
 	void HookReplayWillEnd();
 
 	/* SEND EVENTS */
-	void SendEvent(string eventName, json::JSON jsawn);
+	void SendEvent(std::string eventName, json::JSON jsawn);
 	//void SendEvent(string eventName, ApiGame game);
 	//void SendEvent(string eventName, ApiPlayer player);
 
@@ -94,7 +94,7 @@ private:
 	void RunWsServer();
 	void OnHttpRequest(connection_hdl hdl);
 	//void SendWsPayload(string payload);
-	void SendWebSocketPayload(string payload);
+	void SendWebSocketPayload(std::string payload);
 	void OnWsMsg(connection_hdl hdl, PluginServer::message_ptr msg);
 	void OnWsOpen(connection_hdl hdl) { this->ws_connections->insert(hdl); }
 	void OnWsClose(connection_hdl hdl) { this->ws_connections->erase(hdl); }

@@ -1,9 +1,8 @@
 #include "SOS.h"
 using websocketpp::connection_hdl;
-using namespace std;
 using namespace std::chrono;
-using placeholders::_1;
-using placeholders::_2;
+using std::placeholders::_1;
+using std::placeholders::_2;
 
 
 /*
@@ -12,7 +11,7 @@ using placeholders::_2;
     
 	- Tweaked by CinderBlock for version 1.0.1
 	- Thanks to Martinn for the Stat Feed code (and inadvertently, demolitions)
-	*/
+*/
 
 
 #define SHOULDLOG 0
@@ -28,8 +27,8 @@ BAKKESMOD_PLUGIN(SOS, "Simple Overlay System", "1.0.1", PLUGINTYPE_THREADED)
 void SOS::onLoad()
 {
 	//New cvars
-	enabled = make_shared<bool>(false);
-	port = make_shared<int>(49122);
+	enabled = std::make_shared<bool>(false);
+	port = std::make_shared<int>(49122);
 	cvarManager->registerCvar("SOS_Enabled", "1", "Enable SOS plugin", true, true, 0, true, 0).bindTo(enabled);
 	cvarManager->getCvar("SOS_Enabled").addOnValueChanged(std::bind(&SOS::EnabledChanged, this));
 	cvarManager->registerCvar("SOS_Port", "49122", "Websocket port for SOS overlay plugin", true).bindTo(port);
@@ -37,7 +36,7 @@ void SOS::onLoad()
 	//Original SOS cvars and notifiers
 	update_cvar = std::make_shared<float>(100.0f);
 	cvarManager->registerCvar("sos_state_flush_rate", "100", "Rate at which to send events to websocket (milliseconds)", true, true, 100.0f, true, 2000.0f).bindTo(update_cvar);
-	cvarManager->registerNotifier("SOS_c_reset_internal_state", [this](std::vector<string> params) { HookMatchEnded(); }, "Reset internal state", PERMISSION_ALL);
+	cvarManager->registerNotifier("SOS_c_reset_internal_state", [this](std::vector<std::string> params) { HookMatchEnded(); }, "Reset internal state", PERMISSION_ALL);
 
 	//Hook to update JSON every render frame
 	gameWrapper->HookEvent("Function Engine.GameViewportClient.Tick", std::bind(&SOS::UpdateGameState, this));
@@ -90,7 +89,7 @@ void SOS::HookBallExplode()
 		return;
 	}
 
-	cvarManager->log("BALL GO BOOM " + to_string(clock()));
+	cvarManager->log("BALL GO BOOM " + std::to_string(clock()));
 	PauseClockOnGoal();
 	HookReplayWillEnd();
 	HookGoalScored();
@@ -159,7 +158,7 @@ void SOS::HookReplayEnd()
 }
 void SOS::HookReplayWillEnd()
 {
-	cvarManager->log("HookReplayWillEnd " + to_string(clock()));
+	cvarManager->log("HookReplayWillEnd " + std::to_string(clock()));
 	//No state
 	if (isInReplay)
 	{
@@ -169,7 +168,7 @@ void SOS::HookReplayWillEnd()
 }
 void SOS::HookGoalScored()
 {
-	cvarManager->log("HookGoalScored " + to_string(clock()));
+	cvarManager->log("HookGoalScored " + std::to_string(clock()));
 	//No state
 	if (!isInReplay)
 	{
@@ -179,7 +178,7 @@ void SOS::HookGoalScored()
 }
 
 /* SEND EVENTS */
-void SOS::SendEvent(string eventName, json::JSON jsawn)
+void SOS::SendEvent(std::string eventName, json::JSON jsawn)
 {
 	json::JSON event;
 	event["event"] = eventName;
@@ -268,8 +267,8 @@ void SOS::UpdateGameState()
 void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
 {
 	int key = pri.GetSpectatorShortcut();
-	string name = pri.GetPlayerName().IsNull() ? "" : pri.GetPlayerName().ToString();
-	string id = name + "_" + std::to_string(key);
+	std::string name = pri.GetPlayerName().IsNull() ? "" : pri.GetPlayerName().ToString();
+	std::string id = name + "_" + std::to_string(key);
 
 	state["players"][id] = json::Object();
 
@@ -308,7 +307,7 @@ void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
 		PriWrapper att = car.GetAttackerPRI(); // Attacker is only set on local player???
 		if (!att.IsNull())
 		{
-			string attName = att.GetPlayerName().IsNull() ? "" : att.GetPlayerName().ToString();
+			std::string attName = att.GetPlayerName().IsNull() ? "" : att.GetPlayerName().ToString();
 			state["players"][id]["attacker"] = attName + "_" + std::to_string(att.GetSpectatorShortcut());
 		}
 		else
@@ -456,7 +455,7 @@ void SOS::GetCameraInfo(json::JSON& state)
 	}
 
 	//Get the target's name
-	string name = specPri.GetPlayerName().IsNull() ? "" : specPri.GetPlayerName().ToString();
+	std::string name = specPri.GetPlayerName().IsNull() ? "" : specPri.GetPlayerName().ToString();
 	state["game"]["hasTarget"] = true;
 	state["game"]["target"] = name + "_" + std::to_string(specPri.GetSpectatorShortcut());
 }
@@ -495,7 +494,7 @@ void SOS::UpdateClock()
 
 void SOS::PauseClockOnGoal()
 {
-	cvarManager->log("PauseClockOnGoal " + to_string(clock()));
+	cvarManager->log("PauseClockOnGoal " + std::to_string(clock()));
 	if (!(*enabled)) { return; } // Cancel function call from hook
 
 	//Pause clock
@@ -600,7 +599,7 @@ void SOS::SendWebSocketPayload(std::string payload) {
 			ws_server->send(it, payload, websocketpp::frame::opcode::text);
 		}
 	}
-	catch (exception e) {
+	catch (std::exception e) {
 		cvarManager->log("An error occured sending websocket event");
 	}
 }
