@@ -7,6 +7,7 @@ https://gitlab.com/bakkesplugins/sos/codename-covert
 **SOS has been used by the following productions**
 - Codename: COVERT by iDazerin
 - Disconnect's 3v3 monthly tournaments
+- GoldRushGG
 - Minor League Esports
 - Rocket Soccar Confederation
 - Women's Car Ball Championships by CrimsonGaming
