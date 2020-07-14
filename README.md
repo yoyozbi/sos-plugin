@@ -11,6 +11,7 @@ https://gitlab.com/bakkesplugins/sos/codename-covert
 - Minor League Esports
 - Rocket Soccar Confederation
 - Women's Car Ball Championships by CrimsonGaming
+- Rocket Baguette
 
 ## BakkesMod SDK Setup
 The solution contains $(BAKKESMODSDK) environment variable references for the SDK. Create your own environment variable (use Google) point to the SDK base and the configuration will handle the rest
