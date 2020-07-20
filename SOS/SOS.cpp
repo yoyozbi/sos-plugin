@@ -213,29 +213,34 @@ void SOS::UpdateGameState()
             if (!gameWrapper->GetOnlineGame().IsNull()) {
                 //cvarManager->log("GetOnlineGame().IsNull(): (need false) false");
                 ServerWrapper server = gameWrapper->GetOnlineGame();
-                if (server.GetPlaylist().GetPlaylistId() == 6)
-                {
-                    isInGame = true;
-                    //cvarManager->log("isInGame: (need true) true");
-
-                    ArrayWrapper<PriWrapper> PRIs = server.GetPRIs();
-                    for (int i = 0; i < PRIs.Count(); ++i)
+                if(server.GetPlaylist().memory_address != NULL) {
+                    if (server.GetPlaylist().GetPlaylistId() == 6 || server.GetPlaylist().GetPlaylistId() == 24)
                     {
-                        PriWrapper pri = PRIs.Get(i);
-                        if (pri.IsNull()) { continue; }
-                        if (pri.IsSpectator() || pri.GetTeamNum() == 255) { continue; }
+                        isInGame = true;
+                        //cvarManager->log("isInGame: (need true) true");
 
-                        GetPlayerInfo(state, pri);
+                        ArrayWrapper<PriWrapper> PRIs = server.GetPRIs();
+                        for (int i = 0; i < PRIs.Count(); ++i)
+                        {
+                            PriWrapper pri = PRIs.Get(i);
+                            if (pri.IsNull()) { continue; }
+                            if (pri.IsSpectator() || pri.GetTeamNum() == 255) { continue; }
+
+                            GetPlayerInfo(state, pri);
+                        }
+
+                        GetTeamInfo(state, server);
+                        GetGameTimeInfo(state, server);
+                        GetBallInfo(state, server);
+                        GetWinnerInfo(state, server);
+                        GetCameraInfo(state);
                     }
-
-                    GetTeamInfo(state, server);
-                    GetGameTimeInfo(state, server);
-                    GetBallInfo(state, server);
-                    GetWinnerInfo(state, server);
-                    GetCameraInfo(state);
+                    else {
+                        //cvarManager->log("isInGame: (need true) false");
+                    }
                 }
                 else {
-                    //cvarManager->log("isInGame: (need true) false");
+                    //cvarManager->log("server.GetPlaylist() IsNull: (need false) true");
                 }
             }
             else {
