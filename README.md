@@ -33,20 +33,72 @@ Most event names are fairly self explanatory, but it is still recommended to lis
 The websocket reports the following events in `channel:event` format:
 
 ```
-"game": [
-    "goal_scored" [Object of scorer Player state],
-    "initialized": [Stateless],
-    "match_created": [Stateless],
-    "match_ended": [Object of winnerTeamNumber],
-    "player_team_data": [Object of Player and Team state arrays],
-    "podium_start": [Stateless],
-    "post_countdown_begin": [Stateless],
-    "pre_countdown_begin": [Stateless],
-    "replay_end": [Stateless],
-    "replay_start": [Stateless],
-    "replay_will_end": [Stateless],
-    "update_tick": [Object of Player and Team state arrays],
-]
+{
+  "wsRelay:info": "string",
+  "game:update_state": {
+    "event": "string",
+    "game": {
+      "ballSpeed": "number",
+      "ballTeam": "number",
+      "hasTarget": "boolean",
+      "hasWinner": "boolean",
+      "isOT": "boolean",
+      "isReplay": "boolean",
+      "target": "string",
+      "teams": {
+        "0": {
+          "name": "string",
+          "score": "number"
+        },
+        "1": {
+          "name": "string",
+          "score": "number"
+        }
+      },
+      "time": "number",
+      "winner": "string"
+    },
+    "hasGame": "boolean",
+    "players": {
+      "PLAYER OBJECT": {
+        "assists": "number",
+        "attacker": "string",
+        "boost": "number",
+        "cartouches": "number",
+        "goals": "number",
+        "hasCar": "boolean",
+        "id": "string",
+        "isDead": "boolean",
+        "isSonic": "boolean",
+        "name": "string",
+        "primaryID": "number",
+        "saves": "number",
+        "score": "number",
+        "shots": "number",
+        "speed": "number",
+        "team": "number",
+        "touches": "number"
+      }
+    }
+  },
+  "game:match_created": "string",
+  "game:initialized": "string",
+  "game:pre_countdown_begin": "string",
+  "game:post_countdown_begin": "string",
+  "game:statfeed_event": {
+    "main_target": "string",
+    "secondary_target": "string",
+    "type": "string"
+  },
+  "game:goal_scored": "string",
+  "game:replay_start": "string",
+  "game:replay_will_end": "string",
+  "game:replay_end": "string",
+  "game:match_ended": {
+    "winner_team_num": "number"
+  },
+  "game:podium_start": "string"
+}
 ```
 Stateless means that the event has no useful information attached. It sends a string containing the name of the event
 
