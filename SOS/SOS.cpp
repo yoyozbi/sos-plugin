@@ -275,6 +275,7 @@ void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
     std::string name = pri.GetPlayerName().IsNull() ? "" : pri.GetPlayerName().ToString();
     std::string id = name + "_" + std::to_string(key);
 
+
     state["players"][id] = json::Object();
 
     state["players"][id]["name"] = name;
@@ -288,7 +289,7 @@ void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
     state["players"][id]["saves"] = pri.GetMatchSaves();
     state["players"][id]["touches"] = pri.GetBallTouches();
     state["players"][id]["cartouches"] = pri.GetCarTouches();
-
+    state["players"][id]["demos"] = pri.GetMatchDemolishes();
 
     CarWrapper car = pri.GetCar();
 
@@ -303,8 +304,13 @@ void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
         state["players"][id]["isDead"] = false;
         state["players"][id]["attacker"] = "";
 
-        return;
-    }
+		return;
+	}
+	//else get car position
+	Vector carLocation = car.GetLocation();
+	state["players"][id]["x"] = carLocation.X;
+	state["players"][id]["y"] = carLocation.Y;
+	state["players"][id]["z"] = carLocation.Z;
 
     if (car.GetbHidden())
     {
@@ -408,10 +414,16 @@ void SOS::GetBallInfo(json::JSON& state, ServerWrapper server)
         return;
     }
 
-    //Get ball info
-    state["game"]["ballSpeed"] = static_cast<int>((ball.GetVelocity().magnitude() * .036f) + .5f); // Speed in uu/s, 1uu = 1cm, multiply by .036f to get from cm/s to km/h
-    state["game"]["ballTeam"] = ball.GetHitTeamNum();
-    state["game"]["isReplay"] = ball.GetbReplayActor() ? true : false;
+	//Get ball info
+	state["game"]["ballSpeed"] = static_cast<int>((ball.GetVelocity().magnitude() * .036f) + .5f); // Speed in uu/s, 1uu = 1cm, multiply by .036f to get from cm/s to km/h
+	state["game"]["ballTeam"] = ball.GetHitTeamNum();
+	state["game"]["isReplay"] = ball.GetbReplayActor() ? true : false;
+
+	//Get Ball Location
+	Vector ballLocation = ball.GetLocation();
+	state["game"]["ballX"] = ballLocation.X;
+	state["game"]["ballY"] = ballLocation.Y;
+	state["game"]["ballZ"] = ballLocation.Z;
 }
 void SOS::GetWinnerInfo(json::JSON& state, ServerWrapper server)
 {
@@ -576,10 +588,12 @@ void SOS::RunWsServer()
     ws_server->start_accept();
     ws_server->run();
 }
+
 void SOS::OnWsMsg(connection_hdl hdl, PluginServer::message_ptr msg)
 {
     this->SendWebSocketPayload(msg->get_payload());
 }
+
 void SOS::OnHttpRequest(websocketpp::connection_hdl hdl)
 {
     PluginServer::connection_ptr connection = ws_server->get_con_from_hdl(hdl);
@@ -601,6 +615,7 @@ void SOS::OnHttpRequest(websocketpp::connection_hdl hdl)
     connection->set_body("Not found");
     connection->set_status(websocketpp::http::status_code::not_found);
 }
+
 void SOS::SendWebSocketPayload(std::string payload) {
     // broadcast to all connections
     try {
