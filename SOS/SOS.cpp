@@ -22,7 +22,7 @@ using std::placeholders::_2;
 #endif
 
 
-BAKKESMOD_PLUGIN(SOS, "Simple Overlay System", "1.0.1", PLUGINTYPE_THREADED)
+BAKKESMOD_PLUGIN(SOS, "Simple Overlay System", "1.4.0", PLUGINTYPE_THREADED)
 
 void SOS::onLoad()
 {
@@ -56,7 +56,7 @@ void SOS::onLoad()
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.ReplayPlayback.EndState", std::bind(&SOS::HookReplayEnd, this));
 
     //EVENT FEED
-    gameWrapper->HookEventWithCaller<ServerWrapper>("Function TAGame.GFxHUD_TA.HandleStatTickerMessage", std::bind(&SOS::OnStatEvent, this, _1, _2));
+    gameWrapper->HookEventWithCaller<ServerWrapper>("Function TAGame.PRI_TA.ClientNotifyStatTickerMessage", std::bind(&SOS::OnStatEvent, this, _1, _2));
 
     //Run websocket server
     ws_connections = new ConnectionSet();
@@ -598,7 +598,7 @@ void SOS::OnHttpRequest(websocketpp::connection_hdl hdl)
 {
     PluginServer::connection_ptr connection = ws_server->get_con_from_hdl(hdl);
     connection->append_header("Content-Type", "application/json");
-    connection->append_header("Server", "SOS/0.1");
+    connection->append_header("Server", "SOS/1.4.0");
 
     if (connection->get_resource() == "/init")
     {
