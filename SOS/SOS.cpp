@@ -1,8 +1,7 @@
 #include "SOS.h"
 using websocketpp::connection_hdl;
 using namespace std::chrono;
-using std::placeholders::_1;
-using std::placeholders::_2;
+using namespace std::placeholders;
 
 
 /*
@@ -92,7 +91,7 @@ void SOS::HookBallExplode()
     cvarManager->log("BALL GO BOOM " + std::to_string(clock()));
     PauseClockOnGoal();
     HookReplayWillEnd();
-    HookGoalScored();
+    //HookGoalScored();
 }
 void SOS::HookMatchCreated()
 {
@@ -567,6 +566,12 @@ void SOS::OnStatEvent(ServerWrapper caller, void* args) {
     statfeed["main_target"]["id"] = receiverId;
     statfeed["secondary_target"]["name"] = victimName;
     statfeed["secondary_target"]["id"] = victimId;
+
+    if(eventStr == "Goal")
+    {
+        cvarManager->log("Goal scored");
+        SendEvent("game:goal_scored", statfeed);
+    }
 
     SendEvent("game:statfeed_event", statfeed);
 }
