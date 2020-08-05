@@ -569,8 +569,10 @@ void SOS::OnStatEvent(ServerWrapper caller, void* args) {
 
     if(eventStr == "Goal")
     {
-        cvarManager->log("Goal scored");
-        SendEvent("game:goal_scored", statfeed);
+        json::JSON goalScoreData;
+        goalScoreData["scorer"]["name"] = receiverName;
+        goalScoreData["scorer"]["id"] = receiverId;
+        SendEvent("game:goal_scored", goalScoreData);
     }
 
     SendEvent("game:statfeed_event", statfeed);
