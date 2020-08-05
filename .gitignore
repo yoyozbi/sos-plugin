@@ -36,3 +36,4 @@ BakkesTest/Release
 .vs
 SOS/x64
 x64
+*.user
