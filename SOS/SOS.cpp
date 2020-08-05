@@ -1,4 +1,5 @@
 #include "SOS.h"
+
 using websocketpp::connection_hdl;
 using namespace std::chrono;
 using namespace std::placeholders;
@@ -46,6 +47,7 @@ void SOS::onLoad()
     gameWrapper->HookEvent("Function TAGame.Car_TA.OnHitBall", std::bind(&SOS::UnpauseClockOnBallTouch, this));
     gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.StartOvertime", std::bind(&SOS::PauseClockOnOvertimeStarted, this));
 
+
     //GAME TIME EVENTS
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.WaitingForPlayers.BeginState", std::bind(&SOS::HookMatchCreated, this));
     gameWrapper->HookEventPost("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded", std::bind(&SOS::HookMatchEnded, this));
@@ -56,6 +58,11 @@ void SOS::onLoad()
 
     //EVENT FEED
     gameWrapper->HookEventWithCaller<ServerWrapper>("Function TAGame.PRI_TA.ClientNotifyStatTickerMessage", std::bind(&SOS::OnStatEvent, this, _1, _2));
+
+    #ifdef USE_NAMEPLATES
+    //GET NAMEPLATES
+    gameWrapper->RegisterDrawable(std::bind(&SOS::GetNameplateInfo, this, _1));
+    #endif
 
     //Run websocket server
     ws_connections = new ConnectionSet();
@@ -88,7 +95,7 @@ void SOS::HookBallExplode()
         return;
     }
 
-    cvarManager->log("BALL GO BOOM " + std::to_string(clock()));
+    //cvarManager->log("BALL GO BOOM " + std::to_string(clock()));
     PauseClockOnGoal();
     HookReplayWillEnd();
     //HookGoalScored();
@@ -157,21 +164,21 @@ void SOS::HookReplayEnd()
 }
 void SOS::HookReplayWillEnd()
 {
-    cvarManager->log("HookReplayWillEnd " + std::to_string(clock()));
+    //cvarManager->log("HookReplayWillEnd " + std::to_string(clock()));
     //No state
     if (isInReplay)
     {
-        cvarManager->log("Sending ReplayWillEnd Event");
+        //cvarManager->log("Sending ReplayWillEnd Event");
         SendEvent("game:replay_will_end", "game_replay_will_end");
     }
 }
 void SOS::HookGoalScored()
 {
-    cvarManager->log("HookGoalScored " + std::to_string(clock()));
+    //cvarManager->log("HookGoalScored " + std::to_string(clock()));
     //No state
     if (!isInReplay)
     {
-        cvarManager->log("Sending GoalScored Event");
+        //cvarManager->log("Sending GoalScored Event");
         SendEvent("game:goal_scored", "game_goal_scored");
     }
 }
@@ -190,6 +197,7 @@ void SOS::UpdateGameState()
 {
     if (!(*enabled)) { return; } // Cancel function call from hook
 
+    //Clamp number of events per second
     static steady_clock::time_point lastCallTime = steady_clock::now();
     float timeSinceLastCall = duration_cast<duration<float>>(steady_clock::now() - lastCallTime).count();
     if (timeSinceLastCall < (*update_cvar / 1000.f)) {
@@ -476,6 +484,170 @@ void SOS::GetCameraInfo(json::JSON& state)
     state["game"]["target"] = name + "_" + std::to_string(specPri.GetSpectatorShortcut());
 }
 
+#ifdef USE_NAMEPLATES
+void SOS::GetNameplateInfo(CanvasWrapper canvas)
+{
+    //This function is a "drawable", meaning it runs with every GameViewportClient.Tick()
+    //It is registered as a drawable so things like the canvas.ProjectF method are accessible
+
+    if(!gameWrapper->IsInOnlineGame()) { return; }
+    if(!gameWrapper->GetLocalCar().IsNull()) { return; }
+    ServerWrapper server = gameWrapper->GetOnlineGame();
+    if(server.IsNull()) { return; }
+    if(server.GetPlaylist().memory_address == NULL) { return; }
+    if(server.GetPlaylist().GetPlaylistId() != 6 && server.GetPlaylist().GetPlaylistId() != 24) { return; }
+
+    //Clamp to around 90fps to avoid sending too many updates, but keep smooth motion
+    static steady_clock::time_point lastCallTime = steady_clock::now();
+    float timeSinceLastCall = duration_cast<duration<float>>(steady_clock::now() - lastCallTime).count();
+    if ((timeSinceLastCall * 1000) < 11.11f) {
+        //cvarManager->log("Too early to send update");
+        return;
+    }
+    lastCallTime = steady_clock::now();
+
+    //Create nameplates JSON object
+    json::JSON nameplatesState;
+    nameplatesState["nameplates"] = json::Object();
+
+    CameraWrapper camera = gameWrapper->GetCamera();
+    if(camera.IsNull()) { return; }
+
+    RT::Frustum frustum = RT::Frustum(canvas, camera);
+    
+    //Get information about each car
+    ArrayWrapper<CarWrapper> cars = server.GetCars();
+    for(int i = 0; i != cars.Count(); ++i)
+    {
+        CarWrapper car = cars.Get(i);
+        if(car.IsNull()) { continue; }
+        PriWrapper pri = car.GetPRI();
+        if(pri.IsNull()) { continue; }
+
+        GetIndividualNameplate(canvas, frustum, nameplatesState, car);
+    }
+
+    //Get information about the ball
+    BallWrapper ball = server.GetBall();
+    if(!ball.IsNull())
+    {
+        bool isVisible = frustum.IsInFrustum(ball.GetLocation(), ball.GetRadius());
+
+        Vector2F ballPosition = canvas.ProjectF(ball.GetLocation());
+        Vector2 canvasSize = canvas.GetSize();
+
+        nameplatesState["nameplates"]["ball"]["isvisible"] = isVisible;
+        nameplatesState["nameplates"]["ball"]["position"]["x"] = isVisible ? (ballPosition.X / canvasSize.X) : 0;
+        nameplatesState["nameplates"]["ball"]["position"]["y"] = isVisible ? (ballPosition.Y / canvasSize.Y) : 0;
+        nameplatesState["nameplates"]["ball"]["position"]["depth"] = isVisible ? (ball.GetLocation() - camera.GetLocation()).magnitude() : 0;
+        nameplatesState["nameplates"]["ball"]["radius"] = GetBallVerticalRadius(canvas, ball, camera, frustum);
+    }
+    else
+    {
+        nameplatesState["nameplates"]["ball"]["isvisible"] = false;
+        nameplatesState["nameplates"]["ball"]["position"]["x"] = 0;
+        nameplatesState["nameplates"]["ball"]["position"]["y"] = 0;
+        nameplatesState["nameplates"]["ball"]["position"]["depth"] = 10000;
+        nameplatesState["nameplates"]["ball"]["radius"] = 1;
+    }
+
+    SendEvent("game:nameplate_tick", nameplatesState);
+}
+void SOS::GetIndividualNameplate(CanvasWrapper canvas, RT::Frustum &frustum, json::JSON& nameplatesState, CarWrapper car)
+{
+    CameraWrapper camera = gameWrapper->GetCamera();
+    PriWrapper pri = car.GetPRI();
+
+    int key = pri.GetSpectatorShortcut();
+    std::string name = pri.GetPlayerName().IsNull() ? "" : pri.GetPlayerName().ToString();
+    std::string id = name + "_" + std::to_string(key);
+    
+    //Location of nameplate in 3D space
+    Vector nameplateLoc = car.GetLocation() + Vector{0,0,60};
+
+    bool isVisible = frustum.IsInFrustum(nameplateLoc, 100);
+    nameplatesState["nameplates"]["players"][id]["isvisible"] = isVisible;
+
+    //Return empty values if the player is off screen
+    if(!isVisible)
+    {
+        nameplatesState["nameplates"]["players"][id]["position"]["x"] = 0;
+        nameplatesState["nameplates"]["players"][id]["position"]["y"] = 0;
+        nameplatesState["nameplates"]["players"][id]["position"]["depth"] = 10000;
+        nameplatesState["nameplates"]["players"][id]["scale"] = 1;
+        return;
+    }
+
+    // GET NAMEPLATE POSITION, SCALE, AND DEPTH //
+
+    //Get FOV interpolation amount
+    float inFOV = camera.GetFOV();
+    if(inFOV > 90)
+	{
+		inFOV = 90;
+	}
+	float FOVPerc = inFOV / 90;
+	float FOVInterp = (FOVMin * (1 - FOVPerc)) + (FOVMax * FOVPerc);
+
+    //Get distance interpolation amount
+	float distMag = (nameplateLoc - camera.GetLocation()).magnitude();
+    if(distMag > 10000)
+	{
+		distMag = 10000;
+	}
+	float distPerc = distMag / 10000;
+	float distInterp = (distMin * (1 - distPerc)) + (distMax * distPerc);
+
+    //Get the base visual scale
+	float visScale = RT::GetVisualDistance(canvas, frustum, camera, nameplateLoc);
+
+    //Get the final scale value
+	float finalInterp = visScale * (FOVInterp * distInterp);
+
+
+    Vector2F nameplatePosition = canvas.ProjectF(nameplateLoc);
+    Vector2 canvasSize = canvas.GetSize();
+
+    nameplatesState["nameplates"]["players"][id]["position"]["x"] = nameplatePosition.X / canvasSize.X;
+    nameplatesState["nameplates"]["players"][id]["position"]["y"] = nameplatePosition.Y / canvasSize.Y;
+    nameplatesState["nameplates"]["players"][id]["position"]["depth"] = (nameplateLoc - camera.GetLocation()).magnitude();
+    nameplatesState["nameplates"]["players"][id]["scale"] = finalInterp;
+}
+float SOS::GetBallVerticalRadius(CanvasWrapper canvas, BallWrapper ball, CameraWrapper camera, RT::Frustum &frustum)
+{
+    //Perspective view will stretch ball horizontally, so just get the vertical radius
+
+    // Get the ball's center location
+    //   - If that is outside the frustum (with a buffer radius of ball's size), return 1
+    // From that location, find the point camera.Up * ball.GetRadius
+    //   - If that calculated location is outside the frustum, use the line that goes along -camera.Up
+    // Return 2D magnitude of difference between both Vector2Fs (center and camera.Up)
+
+    Vector ballLoc = ball.GetLocation();
+    float ballRadius = ball.GetRadius();
+
+    if(!frustum.IsInFrustum(ballLoc, ballRadius))
+    {
+        // Ball is off screen
+        // Don't return 0 in case someone uses vertical radius in a division calculation
+        // 1 pixel will be sufficiently small
+        return 1;
+    }
+
+    RT::Matrix3 cameraMat(camera.GetRotation());
+    Vector verticalPoint = cameraMat.up * ballRadius + ballLoc;
+    if(!frustum.IsInFrustum(verticalPoint, 0))
+    {
+        verticalPoint = cameraMat.up * -ballRadius + ballLoc;
+    }
+
+    Vector2F center = canvas.ProjectF(ballLoc);
+    Vector2F edge = canvas.ProjectF(verticalPoint);
+    Vector2F diff = edge - center;
+
+    return sqrtf(diff.X * diff.X + diff.Y * diff.Y);
+}
+#endif
 
 /* TIME UPDATING CODE */
 void SOS::UpdateClock()
@@ -492,7 +664,7 @@ void SOS::UpdateClock()
     //Reset waiting for overtime flag
     if (waitingForOvertimeToStart)
     {
-        cvarManager->log("Resetting OT clock waiter");
+        //cvarManager->log("Resetting OT clock waiter");
         waitingForOvertimeToStart = false;
         return;
     }
@@ -507,10 +679,9 @@ void SOS::UpdateClock()
     //Save the time that the gametime was updated to get float time difference since the last time this function was called
     timeSnapshot = steady_clock::now();
 }
-
 void SOS::PauseClockOnGoal()
 {
-    cvarManager->log("PauseClockOnGoal " + std::to_string(clock()));
+    //cvarManager->log("PauseClockOnGoal " + std::to_string(clock()));
     if (!(*enabled)) { return; } // Cancel function call from hook
 
     //Pause clock
@@ -521,7 +692,6 @@ void SOS::PauseClockOnGoal()
 }
 void SOS::UnpauseClockOnBallTouch()
 {
-    return;
     /*
     if(!(*enabled) || isInReplay) { return; } // Cancel function call from hook
 
@@ -595,12 +765,10 @@ void SOS::RunWsServer()
     ws_server->start_accept();
     ws_server->run();
 }
-
 void SOS::OnWsMsg(connection_hdl hdl, PluginServer::message_ptr msg)
 {
     this->SendWebSocketPayload(msg->get_payload());
 }
-
 void SOS::OnHttpRequest(websocketpp::connection_hdl hdl)
 {
     PluginServer::connection_ptr connection = ws_server->get_con_from_hdl(hdl);
@@ -622,7 +790,6 @@ void SOS::OnHttpRequest(websocketpp::connection_hdl hdl)
     connection->set_body("Not found");
     connection->set_status(websocketpp::http::status_code::not_found);
 }
-
 void SOS::SendWebSocketPayload(std::string payload) {
     // broadcast to all connections
     try {

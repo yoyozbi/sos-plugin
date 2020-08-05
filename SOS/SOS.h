@@ -10,6 +10,7 @@
 #include "json.hpp"
 
 #include "bakkesmod/plugin/bakkesmodplugin.h"
+#include "RenderingTools.h"
 
 using websocketpp::connection_hdl;
 
@@ -34,6 +35,14 @@ private:
     bool newRoundActive = false;
     bool waitingForOvertimeToStart = false;
     void EnabledChanged();
+
+    /* NAMEPLATE SCALE VALUES */
+    //FOV: Anything above 90 degrees remains at 1.0
+	const float FOVMin = 0.1f; //0 degrees
+	const float FOVMax = 1.0f; //90 degrees
+	//DISTANCE: Anything above 10,000 cm remains at 9.0
+	const float distMin = 0.5f; //0 centimeters
+	const float distMax = 9.0f; //10,000 centimeters
 
     /* ORIGINAL SOS VARIABLES */
     std::shared_ptr<float> update_cvar;
@@ -68,6 +77,12 @@ private:
     void GetBallInfo(json::JSON& state, ServerWrapper server);
     void GetWinnerInfo(json::JSON& state, ServerWrapper server);
     void GetCameraInfo(json::JSON& state);
+    
+    #ifdef USE_NAMEPLATES
+    void GetNameplateInfo(CanvasWrapper canvas);
+    void GetIndividualNameplate(CanvasWrapper canvas, RT::Frustum &frustum, json::JSON& nameplatesState, CarWrapper car);
+    float GetBallVerticalRadius(CanvasWrapper canvas, BallWrapper ball, CameraWrapper camera, RT::Frustum &frustum);
+    #endif
 
     /* TIME UPDATING CODE */
     void UpdateClock();
@@ -85,7 +100,7 @@ private:
     {
         uintptr_t Receiver;
         uintptr_t Victim;
-        class DummyStatEvent* StatEvent;
+        DummyStatEvent* StatEvent;
     };
 
     /* WEBSOCKET CODE */
