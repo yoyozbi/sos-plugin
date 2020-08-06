@@ -1,5 +1,6 @@
 SOS - Overlay System
 0|Reset Internal State|SOS_c_reset_internal_state
+1|Send as base64 (useful for non ASCII characters)|SOS_use_base64
 8
 5|Rate at which to send events to websocket (milliseconds)|sos_state_flush_rate|100|2000
 9|Original dll code by gboddin, modified and extended by SimpleAOB

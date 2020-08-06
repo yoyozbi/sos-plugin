@@ -26,6 +26,7 @@ public:
 private:
     /* CVARS */
     std::shared_ptr<bool> enabled;
+    std::shared_ptr<bool> useBase64;
     std::shared_ptr<int> port;
 
     /* FLOAT TIME ASSETS */
