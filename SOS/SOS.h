@@ -20,8 +20,8 @@ class SOS : public BakkesMod::Plugin::BakkesModPlugin
     typedef std::set<connection_hdl, std::owner_less<connection_hdl>> ConnectionSet;
 
 public:
-    virtual void onLoad();
-    virtual void onUnload();
+    void onLoad() override;
+    void onUnload() override;
 
 private:
     /* CVARS */
@@ -52,8 +52,19 @@ private:
     bool isCurrentlySpectating = false;
     bool isInReplay = false;
 
+    float ballCurrentSpeed = 0;
+    float goalSpeed = 0;
+
+    struct LastTouchInfo
+    {
+        std::string playerID;
+        float speed = 0;
+    };
+    LastTouchInfo lastTouch;
+
     /* ORIGINAL SOS HOOKS */
     void HookBallExplode();
+    void HookOnHitGoal();
     void HookMatchCreated();
     void HookMatchEnded();
     void HookCountdownInit();
@@ -62,6 +73,8 @@ private:
     void HookReplayStart();
     void HookReplayEnd();
     void HookReplayWillEnd();
+    void HookCarBallHit(CarWrapper car, void * params, std::string funcName);
+    void GetLastTouchInfo(CarWrapper car);
 
     /* SEND EVENTS */
     void SendEvent(std::string eventName, json::JSON jsawn);
@@ -72,6 +85,7 @@ private:
     void UpdateGameState();
 
     /* INDIVIDUAL FUNCTIONS */
+    void GetBallCurrentSpeed();
     void GetPlayerInfo(json::JSON& state, PriWrapper pri);
     void GetTeamInfo(json::JSON& state, ServerWrapper server);
     void GetGameTimeInfo(json::JSON& state, ServerWrapper server);

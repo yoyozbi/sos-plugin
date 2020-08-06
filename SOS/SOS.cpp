@@ -47,6 +47,7 @@ void SOS::onLoad()
     //Hooks to handle calculations of float gametime
     gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.OnGameTimeUpdated", std::bind(&SOS::UpdateClock, this));
     gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&SOS::HookBallExplode, this));
+    gameWrapper->HookEvent("Function TAGame.Ball_TA.OnHitGoal", std::bind(&SOS::HookOnHitGoal, this));
     gameWrapper->HookEvent("Function TAGame.Car_TA.OnHitBall", std::bind(&SOS::UnpauseClockOnBallTouch, this));
     gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.StartOvertime", std::bind(&SOS::PauseClockOnOvertimeStarted, this));
 
@@ -61,6 +62,9 @@ void SOS::onLoad()
 
     //EVENT FEED
     gameWrapper->HookEventWithCaller<ServerWrapper>("Function TAGame.PRI_TA.ClientNotifyStatTickerMessage", std::bind(&SOS::OnStatEvent, this, _1, _2));
+
+    //LAST TOUCH INFO
+    gameWrapper->HookEventWithCaller<CarWrapper>("Function TAGame.Car_TA.EventHitBall", std::bind(&SOS::HookCarBallHit, this, _1, _2, _3));
 
     #ifdef USE_NAMEPLATES
     //GET NAMEPLATES
@@ -102,6 +106,10 @@ void SOS::HookBallExplode()
     PauseClockOnGoal();
     HookReplayWillEnd();
     //HookGoalScored();
+}
+void SOS::HookOnHitGoal()
+{
+    goalSpeed = ballCurrentSpeed;
 }
 void SOS::HookMatchCreated()
 {
@@ -185,6 +193,26 @@ void SOS::HookGoalScored()
         SendEvent("game:goal_scored", "game_goal_scored");
     }
 }
+void SOS::HookCarBallHit(CarWrapper car, void * params, std::string funcName)
+{
+    //Wait until next tick to get info. Getting the info on the tick the hook was called is too unreliable
+    gameWrapper->SetTimeout(std::bind(&SOS::GetLastTouchInfo, this, car), 0.01f);
+}
+
+void SOS::GetLastTouchInfo(CarWrapper car)
+{
+    if(!gameWrapper->IsInOnlineGame()) { return; }
+    if(car.IsNull()) { return; }
+    PriWrapper PRI = car.GetPRI();
+    if(PRI.IsNull()) { return; }
+    ServerWrapper server = gameWrapper->GetOnlineGame();
+    if(server.IsNull()) { return; }
+    BallWrapper ball = server.GetBall();
+    if(ball.IsNull()) { return; }
+
+    lastTouch.speed = ball.GetVelocity().magnitude() * 0.036f;
+    lastTouch.playerID = PRI.GetPlayerName().IsNull() ? "" : PRI.GetPlayerName().ToString() + '_' + std::to_string(PRI.GetSpectatorShortcut());
+}
 
 /* SEND EVENTS */
 void SOS::SendEvent(std::string eventName, json::JSON jsawn)
@@ -199,6 +227,10 @@ void SOS::SendEvent(std::string eventName, json::JSON jsawn)
 void SOS::UpdateGameState()
 {
     if (!(*enabled)) { return; } // Cancel function call from hook
+
+    //Get ball speed each tick and use latest value when getting goal speed
+    //Ball speed is 0 by the time all goal event hooks fire
+    GetBallCurrentSpeed();
 
     //Clamp number of events per second
     static steady_clock::time_point lastCallTime = steady_clock::now();
@@ -279,6 +311,16 @@ void SOS::UpdateGameState()
 }
 
 /* INDIVIDUAL FUNCTIONS */
+void SOS::GetBallCurrentSpeed()
+{
+    if(!gameWrapper->IsInOnlineGame()) { return; }
+    ServerWrapper server = gameWrapper->GetOnlineGame();
+    if(server.IsNull()) { return; }
+    BallWrapper ball = server.GetBall();
+    if(ball.IsNull()) { return; }
+
+    ballCurrentSpeed = ball.GetVelocity().magnitude() * 0.036f;
+}
 void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
 {
     int key = pri.GetSpectatorShortcut();
@@ -743,8 +785,11 @@ void SOS::OnStatEvent(ServerWrapper caller, void* args) {
     if(eventStr == "Goal")
     {
         json::JSON goalScoreData;
+        goalScoreData["goalspeed"] = goalSpeed;
         goalScoreData["scorer"]["name"] = receiverName;
         goalScoreData["scorer"]["id"] = receiverId;
+        goalScoreData["ball_last_touch"]["player"] = lastTouch.playerID;
+        goalScoreData["ball_last_touch"]["speed"] = lastTouch.speed;
         SendEvent("game:goal_scored", goalScoreData);
     }
 
