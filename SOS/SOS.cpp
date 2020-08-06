@@ -1,4 +1,5 @@
 #include "SOS.h"
+#include "utils/parser.h"
 
 using websocketpp::connection_hdl;
 using namespace std::chrono;
@@ -28,9 +29,11 @@ void SOS::onLoad()
 {
     //New cvars
     enabled = std::make_shared<bool>(false);
+    useBase64 = std::make_shared<bool>(false);
     port = std::make_shared<int>(49122);
-    cvarManager->registerCvar("SOS_Enabled", "1", "Enable SOS plugin", true, true, 0, true, 0).bindTo(enabled);
+    cvarManager->registerCvar("SOS_Enabled", "1", "Enable SOS plugin", true, true, 0, true, 1).bindTo(enabled);
     cvarManager->getCvar("SOS_Enabled").addOnValueChanged(std::bind(&SOS::EnabledChanged, this));
+    cvarManager->registerCvar("SOS_use_base64", "0", "Use base64 encoding to send websocket info (useful for non ASCII characters)", true, true, 0, true, 1).bindTo(useBase64);
     cvarManager->registerCvar("SOS_Port", "49122", "Websocket port for SOS overlay plugin", true).bindTo(port);
 
     //Original SOS cvars and notifiers
@@ -793,8 +796,17 @@ void SOS::OnHttpRequest(websocketpp::connection_hdl hdl)
 void SOS::SendWebSocketPayload(std::string payload) {
     // broadcast to all connections
     try {
+        std::string output;
+
+        if(*useBase64) {
+            output = base64_encode((const unsigned char*)payload.c_str(), (unsigned int)payload.size());
+        }
+        else {
+            output = payload;
+        }
+
         for (connection_hdl it : *ws_connections) {
-            ws_server->send(it, payload, websocketpp::frame::opcode::text);
+            ws_server->send(it, output, websocketpp::frame::opcode::text);
         }
     }
     catch (std::exception e) {
