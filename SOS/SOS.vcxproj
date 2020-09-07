@@ -116,6 +116,7 @@
     <ClInclude Include="..\RenderingTools\Objects\VisualCamera.h" />
     <ClInclude Include="..\RenderingTools\RenderingTools.h" />
     <ClInclude Include="SOS.h" />
+    <ClInclude Include="Structs.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\RenderingTools\Extra\RenderingAssistant.cpp" />
@@ -136,7 +137,12 @@
     <ClCompile Include="..\RenderingTools\Objects\Triangle.cpp" />
     <ClCompile Include="..\RenderingTools\Objects\VisualCamera.cpp" />
     <ClCompile Include="..\RenderingTools\RenderingTools.cpp" />
+    <ClCompile Include="Clock.cpp" />
+    <ClCompile Include="EventHooks.cpp" />
+    <ClCompile Include="GameState.cpp" />
+    <ClCompile Include="Nameplates.cpp" />
     <ClCompile Include="SOS.cpp" />
+    <ClCompile Include="Websocket.cpp" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\goals.html" />
