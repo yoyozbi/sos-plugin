@@ -7,135 +7,128 @@
 #include "websocketpp/config/asio_no_tls.hpp"
 #include "websocketpp/server.hpp"
 
-#include "json.hpp"
-
 #include "bakkesmod/plugin/bakkesmodplugin.h"
-#include "RenderingTools.h"
+#include "Structs.h"
 
+// USINGS
+using namespace std::chrono;
+using namespace std::placeholders;
 using websocketpp::connection_hdl;
+using PluginServer = websocketpp::server<websocketpp::config::asio>;
+using ConnectionSet = std::set<connection_hdl, std::owner_less<connection_hdl>>;
 
+// FORWARD DECLARATIONS
+namespace json
+{
+    class JSON;
+}
+
+#ifdef USE_NAMEPLATES
+namespace RT
+{
+    class Frustum;
+}
+#endif
+
+// LOGGING PREPROCESSOR MACROS (change SHOULDLOG 0 to 1 if you want debug logging)
+#define SHOULDLOG 0
+#if SHOULDLOG
+    #define LOGC(x) cvarManager->log(x)
+#else
+    #define LOGC(x)
+#endif
+
+// SOS CLASS
 class SOS : public BakkesMod::Plugin::BakkesModPlugin
 {
-    typedef websocketpp::server<websocketpp::config::asio> PluginServer;
-    typedef std::set<connection_hdl, std::owner_less<connection_hdl>> ConnectionSet;
-
 public:
     void onLoad() override;
     void onUnload() override;
+    void OnEnabledChanged();
 
 private:
-    /* CVARS */
-    std::shared_ptr<bool> enabled;
-    std::shared_ptr<bool> useBase64;
-    std::shared_ptr<int> port;
+    // CVARS
+    std::shared_ptr<bool>  cvarEnabled;
+    std::shared_ptr<bool>  cvarUseBase64;
+    std::shared_ptr<int>   cvarPort;
+    std::shared_ptr<float> cvarUpdateRate;
 
-    /* FLOAT TIME ASSETS */
+    // FLOAT TIME VARIABLES
+    steady_clock::time_point timeSnapshot;
     float diff = 0;
-    std::chrono::steady_clock::time_point timeSnapshot;
     bool isClockPaused = false;
     bool newRoundActive = false;
     bool waitingForOvertimeToStart = false;
-    void EnabledChanged();
 
-    /* NAMEPLATE SCALE VALUES */
-    //FOV: Anything above 90 degrees remains at 1.0
-	const float FOVMin = 0.1f; //0 degrees
-	const float FOVMax = 1.0f; //90 degrees
-	//DISTANCE: Anything above 10,000 cm remains at 9.0
-	const float distMin = 0.5f; //0 centimeters
-	const float distMax = 9.0f; //10,000 centimeters
-
-    /* ORIGINAL SOS VARIABLES */
-    std::shared_ptr<float> update_cvar;
+    // ORIGINAL SOS VARIABLES
     bool firstCountdownHit = false;
     bool matchCreated = false;
     bool isCurrentlySpectating = false;
     bool isInReplay = false;
 
+    // BALL SPEED / GOAL SPEED VARIABLES
     float ballCurrentSpeed = 0;
     float goalSpeed = 0;
-
-    struct LastTouchInfo
-    {
-        std::string playerID;
-        float speed = 0;
-    };
     LastTouchInfo lastTouch;
 
-    /* ORIGINAL SOS HOOKS */
+    // MAIN FUNCTION (GameState.cpp)
+    void UpdateGameState();
+    bool GetGameStateInfo(class json::JSON& state);
+
+    // HOOKS (EventHooks.cpp)
+    void HookAllEvents();
+    void HookViewportTick();
     void HookBallExplode();
     void HookOnHitGoal();
     void HookMatchCreated();
     void HookMatchEnded();
     void HookCountdownInit();
     void HookPodiumStart();
-    void HookGoalScored();
     void HookReplayStart();
     void HookReplayEnd();
     void HookReplayWillEnd();
+    void HookStatEvent(ServerWrapper caller, void* args);
     void HookCarBallHit(CarWrapper car, void * params, std::string funcName);
+
+    // DATA GATHERING FUNCTIONS (GameState.cpp)
+    void GetNameAndID(PriWrapper PRI, std::string &name, std::string &ID);
+    void GetPlayerInfo(class json::JSON& state, PriWrapper pri);
+    void GetTeamInfo(class json::JSON& state, ServerWrapper server);
+    void GetGameTimeInfo(class json::JSON& state, ServerWrapper server);
+    void GetBallInfo(class json::JSON& state, ServerWrapper server);
+    void GetWinnerInfo(class json::JSON& state, ServerWrapper server);
+    void GetCameraInfo(class json::JSON& state);
     void GetLastTouchInfo(CarWrapper car);
-
-    /* SEND EVENTS */
-    void SendEvent(std::string eventName, json::JSON jsawn);
-    //void SendEvent(string eventName, ApiGame game);
-    //void SendEvent(string eventName, ApiPlayer player);
-
-    /* MAIN FUNCTION */
-    void UpdateGameState();
-
-    /* INDIVIDUAL FUNCTIONS */
-    void GetBallCurrentSpeed();
-    void GetPlayerInfo(json::JSON& state, PriWrapper pri);
-    void GetTeamInfo(json::JSON& state, ServerWrapper server);
-    void GetGameTimeInfo(json::JSON& state, ServerWrapper server);
-    void GetBallInfo(json::JSON& state, ServerWrapper server);
-    void GetWinnerInfo(json::JSON& state, ServerWrapper server);
-    void GetCameraInfo(json::JSON& state);
+    void GetCurrentBallSpeed();
     
+    // NAMEPLATE FUNCTIONS (Nameplates.cpp)
     #ifdef USE_NAMEPLATES
+    //FOV: Anything above 90 degrees remains at 1.0
+	//DISTANCE: Anything above 10,000 cm remains at 9.0
+	const float FOVMin = 0.1f; //0 degrees
+	const float FOVMax = 1.0f; //90 degrees
+	const float distMin = 0.5f; //0 centimeters
+	const float distMax = 9.0f; //10,000 centimeters
     void GetNameplateInfo(CanvasWrapper canvas);
-    void GetIndividualNameplate(CanvasWrapper canvas, RT::Frustum &frustum, json::JSON& nameplatesState, CarWrapper car);
-    float GetBallVerticalRadius(CanvasWrapper canvas, BallWrapper ball, CameraWrapper camera, RT::Frustum &frustum);
+    void GetIndividualNameplate(CanvasWrapper canvas, class RT::Frustum &frustum, class json::JSON& nameplatesState, CarWrapper car);
+    float GetBallVerticalRadius(CanvasWrapper canvas, BallWrapper ball, CameraWrapper camera, class RT::Frustum &frustum);
     #endif
 
-    /* TIME UPDATING CODE */
+    // CLOCK FUNCTIONS (Clock.cpp)
     void UpdateClock();
     void PauseClockOnGoal();
     void UnpauseClockOnBallTouch();
     void PauseClockOnOvertimeStarted();
 
-    void OnStatEvent(ServerWrapper caller, void* args);
-    struct DummyStatEvent {
-        char pad[144];
-        wchar_t* Label;
-    };
-
-    struct DummyStatEventContainer
-    {
-        uintptr_t Receiver;
-        uintptr_t Victim;
-        DummyStatEvent* StatEvent;
-    };
-
-    /* WEBSOCKET CODE */
+    // WEBSOCKET FUNCTIONS
     PluginServer* ws_server;
     ConnectionSet* ws_connections;
     void RunWsServer();
+    void StopWsServer();
     void OnHttpRequest(connection_hdl hdl);
-    //void SendWsPayload(string payload);
     void SendWebSocketPayload(std::string payload);
+    void SendEvent(std::string eventName, const class json::JSON& jsawn);
     void OnWsMsg(connection_hdl hdl, PluginServer::message_ptr msg);
     void OnWsOpen(connection_hdl hdl) { this->ws_connections->insert(hdl); }
     void OnWsClose(connection_hdl hdl) { this->ws_connections->erase(hdl); }
-
-
-    // Helpers because Simple is bad at coding and organizing
-    std::string& replace(std::string& s, const std::string& from, const std::string& to)
-    {
-        if (!from.empty())
-            for (size_t pos = 0; (pos = s.find(from, pos)) != std::string::npos; pos += to.size())
-                s.replace(pos, from.size(), to);
-        return s;
-    }
 };
