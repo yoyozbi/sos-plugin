@@ -18,6 +18,7 @@ void SOS::HookAllEvents()
 
     //GAME EVENTS
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.WaitingForPlayers.BeginState", std::bind(&SOS::HookMatchCreated, this));
+    gameWrapper->HookEventPost("Function TAGame.GameEvent_Soccar_TA.Destroyed", std::bind(&SOS::HookMatchDestroyed, this));
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.Countdown.BeginState", std::bind(&SOS::HookCountdownInit, this));
     gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&SOS::HookBallExplode, this));
     gameWrapper->HookEvent("Function TAGame.Ball_TA.OnHitGoal", std::bind(&SOS::HookOnHitGoal, this));
@@ -62,6 +63,17 @@ void SOS::HookMatchCreated()
     matchCreated = true;
     diff = 0;
     SendEvent("game:match_created", "game_match_created");
+}
+
+void SOS::HookMatchDestroyed()
+{
+    isInReplay = false;
+    matchCreated = false;
+    firstCountdownHit = false;
+    isCurrentlySpectating = false;
+    isClockPaused = true;
+
+    SendEvent("game:match_destroyed", "game_match_destroyed");
 }
 
 void SOS::HookCountdownInit()
