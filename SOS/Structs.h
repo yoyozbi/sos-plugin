@@ -7,14 +7,9 @@ struct LastTouchInfo
     float speed = 0;
 };
 
-struct DummyStatEvent {
-    char pad[144];
-    wchar_t* Label;
-};
-
 struct DummyStatEventContainer
 {
     uintptr_t Receiver;
     uintptr_t Victim;
-    DummyStatEvent* StatEvent;
+    uintptr_t* StatEvent;
 };
