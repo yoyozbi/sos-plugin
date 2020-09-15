@@ -152,8 +152,9 @@ void SOS::HookStatEvent(ServerWrapper caller, void* args)
 {
     auto tArgs = (DummyStatEventContainer*)args;
 
-    std::wstring ws(tArgs->StatEvent->Label);
-    std::string eventStr = std::string(ws.begin(), ws.end());
+    auto statEvent = StatEventWrapper(tArgs->StatEvent);
+    auto label = statEvent.GetLabel();
+    auto eventStr = label.ToString();
 
     //Victim info
     auto victim = PriWrapper(tArgs->Victim);
