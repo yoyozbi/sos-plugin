@@ -11,5 +11,5 @@ struct DummyStatEventContainer
 {
     uintptr_t Receiver;
     uintptr_t Victim;
-    uintptr_t* StatEvent;
+    uintptr_t StatEvent;
 };

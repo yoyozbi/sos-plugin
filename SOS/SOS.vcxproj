@@ -116,9 +116,6 @@
     <ClInclude Include="..\sos-plugin-includes\RenderingTools\Objects\Triangle.h" />
     <ClInclude Include="..\sos-plugin-includes\RenderingTools\Objects\VisualCamera.h" />
     <ClInclude Include="..\sos-plugin-includes\RenderingTools\RenderingTools.h" />
-    <ClInclude Include="ApiGame.h" />
-    <ClInclude Include="ApiPlayer.h" />
-    <ClInclude Include="ApiTeam.h" />
     <ClInclude Include="SOS.h" />
     <ClInclude Include="Structs.h" />
   </ItemGroup>

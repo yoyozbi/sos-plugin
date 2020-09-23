@@ -81,9 +81,6 @@
     <ClInclude Include="Structs.h">
       <Filter>Plugin Code\SOS</Filter>
     </ClInclude>
-    <ClInclude Include="ApiGame.h" />
-    <ClInclude Include="ApiPlayer.h" />
-    <ClInclude Include="ApiTeam.h" />
     <ClInclude Include="..\sos-plugin-includes\RenderingTools\Extra\CanvasExtensions.h">
       <Filter>RenderingTools\Extra</Filter>
     </ClInclude>

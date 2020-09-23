@@ -32,7 +32,7 @@ Address: ws://localhost:49122
 Most event names are fairly self explanatory, but it is still recommended to listen to the WebSocket server for a game or two to get a feel for when events are fired
 The websocket reports the following events in `channel:event` format:
 
-```
+```json
 {
   "wsRelay:info": "string",
   "game:update_state": {
@@ -97,7 +97,8 @@ The websocket reports the following events in `channel:event` format:
   "game:match_ended": {
     "winner_team_num": "number"
   },
-  "game:podium_start": "string"
+  "game:podium_start": "string",
+  "game:replay_created": "string"
 }
 ```
 Stateless means that the event has no useful information attached. It sends a string containing the name of the event

@@ -1,5 +1,6 @@
 #include "SOS.h"
 #include "json.hpp"
+#include "bakkesmod/wrappers/GameObject/Stats/StatEventWrapper.h"
 
 /*
     Many of these hooks need to have `if (!*cvarEnabled) { return; }` added
