@@ -115,6 +115,9 @@
     <ClInclude Include="..\RenderingTools\Objects\Triangle.h" />
     <ClInclude Include="..\RenderingTools\Objects\VisualCamera.h" />
     <ClInclude Include="..\RenderingTools\RenderingTools.h" />
+    <ClInclude Include="ApiGame.h" />
+    <ClInclude Include="ApiPlayer.h" />
+    <ClInclude Include="ApiTeam.h" />
     <ClInclude Include="SOS.h" />
     <ClInclude Include="Structs.h" />
   </ItemGroup>

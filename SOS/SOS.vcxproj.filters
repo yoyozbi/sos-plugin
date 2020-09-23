@@ -135,6 +135,9 @@
     <ClInclude Include="Structs.h">
       <Filter>Plugin Code\SOS</Filter>
     </ClInclude>
+    <ClInclude Include="ApiGame.h" />
+    <ClInclude Include="ApiPlayer.h" />
+    <ClInclude Include="ApiTeam.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="..\sos.set">

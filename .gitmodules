@@ -1,7 +1,3 @@
-[submodule "RenderingTools"]
-	path = RenderingTools
-	url = https://github.com/CinderBlocc/RenderingTools.git
-	branch = master
 [submodule "sos-plugin-includes"]
 	path = sos-plugin-includes
 	url = git@gitlab.com:bakkesplugins/sos/sos-plugin-includes.git
