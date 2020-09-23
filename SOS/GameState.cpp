@@ -57,8 +57,16 @@ bool SOS::GetGameStateInfo(json::JSON& state)
 void SOS::GetNameAndID(PriWrapper PRI, std::string &name, std::string &ID)
 {
     //Use this whenever you need a player's name and ID in a JSON object
-    name = PRI.GetPlayerName().IsNull() ? "" : PRI.GetPlayerName().ToString();
-    ID = name + '_' + std::to_string(PRI.GetSpectatorShortcut());
+    if (PRI.IsNull())
+    {
+        name = "";
+        ID = "";
+    }
+    else 
+    {
+        name = PRI.GetPlayerName().IsNull() ? "" : PRI.GetPlayerName().ToString();
+        ID = name + '_' + std::to_string(PRI.GetSpectatorShortcut());
+    }
 }
 
 void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
@@ -101,6 +109,18 @@ void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
 	state["players"][id]["x"] = carLocation.X;
 	state["players"][id]["y"] = carLocation.Y;
 	state["players"][id]["z"] = carLocation.Z;
+
+	Rotator carRotation = car.GetRotation();
+	state["players"][id]["roll"] = carRotation.Roll;
+	state["players"][id]["pitch"] = carRotation.Pitch;
+	state["players"][id]["yaw"] = carRotation.Yaw;
+
+	state["players"][id]["onWall"] = car.IsOnWall();
+	state["players"][id]["onGround"] = car.IsOnGround();
+
+	// Check if player is powersliding
+	ControllerInput controller = car.GetInput();
+	state["players"][id]["isPowersliding"] = controller.Handbrake && car.IsOnGround();
 
     if (car.GetbHidden())
     {
@@ -178,9 +198,13 @@ void SOS::GetGameTimeInfo(json::JSON& state, ServerWrapper server)
     //Add or subtract the time difference to/from the current time on the clock. +/- depends on overtime status
     float floatTime = 0;
     if (!server.GetbOverTime())
+    {
         floatTime = (float)server.GetSecondsRemaining() - diff;
+    }
     else
+    {
         floatTime = (float)server.GetSecondsRemaining() + diff;
+    }
 
     //Zero out time after game ends because UpdateClock() isn't called again
     if (floatTime < 0 || waitingForOvertimeToStart) floatTime = 0;
@@ -188,7 +212,13 @@ void SOS::GetGameTimeInfo(json::JSON& state, ServerWrapper server)
     state["game"]["time"] = !firstCountdownHit ? 300.f : (bool)server.GetbOverTime() ? server.GetSecondsRemaining() : floatTime;
     state["game"]["isOT"] = (bool)server.GetbOverTime();
 
-    LOGC(to_string((float)server.GetSecondsRemaining() - diff));
+    if (gameWrapper->IsInReplay())
+    {
+        state["game"]["frame"] = gameWrapper->GetGameEventAsReplay().GetCurrentReplayFrame();
+        state["game"]["elapsed"] = gameWrapper->GetGameEventAsReplay().GetReplayTimeElapsed();
+    }
+
+    LOGC(std::to_string((float)server.GetSecondsRemaining() - diff));
 }
 
 void SOS::GetBallInfo(json::JSON& state, ServerWrapper server)

@@ -21,10 +21,12 @@ void SOS::HookAllEvents()
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.Countdown.BeginState", std::bind(&SOS::HookCountdownInit, this));
     gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&SOS::HookBallExplode, this));
     gameWrapper->HookEvent("Function TAGame.Ball_TA.OnHitGoal", std::bind(&SOS::HookOnHitGoal, this));
+    gameWrapper->HookEvent("Function TAGame.GameInfo_Replay_TA.InitGame", std::bind(&SOS::HookReplayCreated, this));
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.ReplayPlayback.BeginState", std::bind(&SOS::HookReplayStart, this));
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.ReplayPlayback.EndState", std::bind(&SOS::HookReplayEnd, this));
     gameWrapper->HookEventPost("Function TAGame.GameEvent_Soccar_TA.EventMatchEnded", std::bind(&SOS::HookMatchEnded, this));
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.PodiumSpotlight.BeginState", std::bind(&SOS::HookPodiumStart, this));
+
 
     //STATEVENT FEED
     gameWrapper->HookEventWithCaller<ServerWrapper>("Function TAGame.PRI_TA.ClientNotifyStatTickerMessage", std::bind(&SOS::HookStatEvent, this, _1, _2));
@@ -40,16 +42,16 @@ void SOS::HookViewportTick()
     //Clamp number of events per second
     static steady_clock::time_point lastCallTime = steady_clock::now(); // this line only fires first time function is called
     float timeSinceLastCall = duration_cast<duration<float>>(steady_clock::now() - lastCallTime).count();
-    lastCallTime = steady_clock::now();
 
     //MAIN FUNCTION (GameState.cpp)
     if (timeSinceLastCall >= (*cvarUpdateRate / 1000.f))
     {
         UpdateGameState();
+        lastCallTime = steady_clock::now();
     }
     else
     {
-        LOGC("Too early to send gamestate update");
+        LOGC(std::to_string(timeSinceLastCall) + " - " + std::to_string((*cvarUpdateRate / 1000.f)) + " - Too early to send gamestate update");
     }
     
     //Get ball speed every tick (for goal speed)
@@ -88,6 +90,16 @@ void SOS::HookOnHitGoal()
 {
     goalSpeed = ballCurrentSpeed;
 }
+
+void SOS::HookReplayCreated()
+{
+    //No state
+    isClockPaused = true;
+    matchCreated = true;
+    diff = 0;
+    SendEvent("game:replay_created", "game_replay_created");
+}
+
 
 void SOS::HookReplayStart()
 {

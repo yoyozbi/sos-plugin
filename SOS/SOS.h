@@ -84,6 +84,7 @@ private:
     void HookMatchEnded();
     void HookCountdownInit();
     void HookPodiumStart();
+    void HookReplayCreated();
     void HookReplayStart();
     void HookReplayEnd();
     void HookReplayWillEnd();

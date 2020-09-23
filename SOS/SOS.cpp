@@ -26,7 +26,7 @@ void SOS::onLoad()
     cvarManager->registerCvar("SOS_use_base64", "0", "Use base64 encoding to send websocket info (useful for non ASCII characters)", true, true, 0, true, 1).bindTo(cvarUseBase64);
     cvarManager->registerCvar("SOS_Port", "49122", "Websocket port for SOS overlay plugin", true).bindTo(cvarPort);
     cvarManager->registerCvar("SOS_state_flush_rate", "100", "Rate at which to send events to websocket (milliseconds)", true, true, 5.0f, true, 2000.0f).bindTo(cvarUpdateRate);
-  //TAKE SPECIAL NOTE OF THIS  ^^^  The "SOS" here used to be lowercase specifically for (SOS_state_flush_rate), but I wanted it to be consistent. May break things
+    //TAKE SPECIAL NOTE OF THIS  ^^^  The "SOS" here used to be lowercase specifically for (SOS_state_flush_rate), but I wanted it to be consistent. May break things
     //If it breaks, the change also needs to be reverted in sos.set
 
     //Notifiers
