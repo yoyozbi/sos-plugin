@@ -111,3 +111,4 @@ https://gitlab.com/bakkesplugins/sos/sos-plugin-includes
 - websocketpp 0.8.1 https://github.com/zaphoyd/websocketpp
 - asio https://think-async.com/Asio/
 - SimpleJson https://github.com/nbsdx/SimpleJSON
+- RenderingTools https://github.com/CinderBlocc/RenderingTools
