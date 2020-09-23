@@ -81,6 +81,7 @@ private:
     void HookBallExplode();
     void HookOnHitGoal();
     void HookMatchCreated();
+    void HookMatchDestroyed();
     void HookMatchEnded();
     void HookCountdownInit();
     void HookPodiumStart();
