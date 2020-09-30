@@ -16,6 +16,8 @@ void SOS::SendEvent(std::string eventName, const json::JSON &jsawn)
 void SOS::RunWsServer()
 {
     cvarManager->log("[SOS] Starting WebSocket server");
+
+    ws_connections = new ConnectionSet();
     ws_server = new PluginServer();
     
     cvarManager->log("[SOS] Starting asio");
@@ -35,12 +37,20 @@ void SOS::RunWsServer()
 
 void SOS::StopWsServer()
 {
-    if (ws_server != nullptr)
+    if (ws_server)
     {
         ws_server->stop();
         ws_server->stop_listening();
+        delete ws_server;
+        ws_server = nullptr;
     }
-    ws_connections->clear();
+
+    if (ws_connections)
+    {
+        ws_connections->clear();
+        delete ws_connections;
+        ws_connections = nullptr;
+    }
 }
 
 void SOS::OnWsMsg(connection_hdl hdl, PluginServer::message_ptr msg)

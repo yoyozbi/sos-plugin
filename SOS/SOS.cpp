@@ -41,7 +41,6 @@ void SOS::onLoad()
     #endif
 
     //Run websocket server (Websocket.cpp)
-    ws_connections = new ConnectionSet();
     RunWsServer();
 }
 
