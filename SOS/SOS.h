@@ -71,7 +71,11 @@ private:
     float goalSpeed = 0;
     LastTouchInfo lastTouch;
 
+    // RESTRICTION FUNCTION
+    bool ShouldRun();
+
     // MAIN FUNCTION (GameState.cpp)
+    ServerWrapper GetCurrentGameState();
     void UpdateGameState();
     bool GetGameStateInfo(class json::JSON& state);
 
@@ -80,6 +84,7 @@ private:
     void HookViewportTick();
     void HookBallExplode();
     void HookOnHitGoal();
+    void HookInitTeams();
     void HookMatchCreated();
     void HookMatchDestroyed();
     void HookMatchEnded();

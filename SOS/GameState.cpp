@@ -5,6 +5,16 @@
     GetGameTimeInfo needs to mesh better with the functions in Clock.cpp
 */
 
+ServerWrapper SOS::GetCurrentGameState()
+{
+    if(gameWrapper->IsInReplay())
+		return gameWrapper->GetGameEventAsReplay().memory_address;
+	else if(gameWrapper->IsInOnlineGame())
+		return gameWrapper->GetOnlineGame();
+	else
+		return gameWrapper->GetGameEventAsServer();
+}
+
 void SOS::UpdateGameState()
 {
     json::JSON state;
@@ -25,14 +35,8 @@ void SOS::UpdateGameState()
 
 bool SOS::GetGameStateInfo(json::JSON& state)
 {    
-    //Check if gamestate is valid
-    if (!gameWrapper->GetLocalCar().IsNull()) { LOGC("GetLocalCar().IsNull(): (need true) false"); return false; }
-    if (!gameWrapper->IsInOnlineGame()) { LOGC("IsInOnlineGame(): (need true) false"); return false; }
-    ServerWrapper server = gameWrapper->GetOnlineGame();
-    if (server.IsNull()) { LOGC("server.IsNull(): (need false) true"); return false; }
-    if (server.GetPlaylist().memory_address == NULL) { LOGC("server.GetPlaylist().memory_address == NULL: (need false) true"); return false; }
-    int playlistID = server.GetPlaylist().GetPlaylistId();
-    if (playlistID != 6 && playlistID != 24) { LOGC("server.GetPlaylist().GetPlaylistId(): (need 6 or 24) " + std::to_string(playlistID)); return false; }
+    if(!ShouldRun()) { return false; }
+    ServerWrapper server = GetCurrentGameState();
 
     //Get info
     ArrayWrapper<PriWrapper> PRIs = server.GetPRIs();
@@ -250,7 +254,7 @@ void SOS::GetCurrentBallSpeed()
 {
     //This function is called by HookViewportClientTick event
     if (!gameWrapper->IsInOnlineGame()) { return; }
-    ServerWrapper server = gameWrapper->GetOnlineGame();
+    ServerWrapper server = GetCurrentGameState();
     if (server.IsNull()) { return; }
     BallWrapper ball = server.GetBall();
     if (ball.IsNull()) { return; }
@@ -319,7 +323,7 @@ void SOS::GetLastTouchInfo(CarWrapper car)
     if (car.IsNull()) { return; }
     PriWrapper PRI = car.GetPRI();
     if (PRI.IsNull()) { return; }
-    ServerWrapper server = gameWrapper->GetOnlineGame();
+    ServerWrapper server = GetCurrentGameState();
     if (server.IsNull()) { return; }
     BallWrapper ball = server.GetBall();
     if (ball.IsNull()) { return; }

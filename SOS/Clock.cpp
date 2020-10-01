@@ -11,7 +11,7 @@ void SOS::UpdateClock()
 
     if (!*cvarEnabled && !matchCreated && !isInReplay) { return; }
 
-    ServerWrapper server = gameWrapper->GetOnlineGame();
+    ServerWrapper server = GetCurrentGameState();
     if (!gameWrapper->IsInOnlineGame() || server.IsNull()) { return; }
 
     //Reset waiting for overtime flag
