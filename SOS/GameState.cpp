@@ -144,7 +144,7 @@ void SOS::GetPlayerInfo(json::JSON& state, PriWrapper pri)
     float boost = car.GetBoostComponent().IsNull() ? 0 : car.GetBoostComponent().GetPercentBoostFull();
 
     state["players"][id]["hasCar"] = true;
-    state["players"][id]["speed"] = static_cast<int>((car.GetVelocity().magnitude() * .036f) + .5f); // Speed in uu/s, 1uu = 1cm, multiply by .036f to get from cm/s to km/h
+    state["players"][id]["speed"] = static_cast<int>(ToKPH(car.GetVelocity().magnitude()) + .5f);
     state["players"][id]["boost"] = static_cast<int>(boost * 100);
     state["players"][id]["isSonic"] = car.GetbSuperSonic() ? true : false;
 }
@@ -249,13 +249,14 @@ void SOS::GetBallInfo(json::JSON& state, ServerWrapper server)
 void SOS::GetCurrentBallSpeed()
 {
     //This function is called by HookViewportClientTick event
+    if (bLockBallSpeed) { return; }
     if (!gameWrapper->IsInOnlineGame()) { return; }
     ServerWrapper server = gameWrapper->GetOnlineGame();
     if (server.IsNull()) { return; }
     BallWrapper ball = server.GetBall();
     if (ball.IsNull()) { return; }
 
-    ballCurrentSpeed = ball.GetVelocity().magnitude() * 0.036f + .5f; // Speed in uu/s, 1uu = 1cm, multiply by .036f to get from cm/s to km/h
+    ballCurrentSpeed = ToKPH(ball.GetVelocity().magnitude()) + .5f;
 }
 
 void SOS::GetWinnerInfo(json::JSON& state, ServerWrapper server)
@@ -327,6 +328,6 @@ void SOS::GetLastTouchInfo(CarWrapper car)
     std::string playerName, playerID;
     GetNameAndID(PRI, playerName, playerID);
 
-    lastTouch.speed = ball.GetVelocity().magnitude() * 0.036f + .5f;
+    lastTouch.speed = ToKPH(ball.GetVelocity().magnitude()) + .5f;
     lastTouch.playerID = playerID;
 }

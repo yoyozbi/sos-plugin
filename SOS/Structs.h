@@ -13,3 +13,9 @@ struct DummyStatEventContainer
     uintptr_t Victim;
     uintptr_t StatEvent;
 };
+
+struct BallHitGoalParams
+{
+    uintptr_t GoalPointer;
+    Vector HitLocation;
+};

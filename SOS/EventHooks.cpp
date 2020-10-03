@@ -22,7 +22,7 @@ void SOS::HookAllEvents()
     gameWrapper->HookEventPost("Function TAGame.GameEvent_Soccar_TA.Destroyed", std::bind(&SOS::HookMatchDestroyed, this));
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.Countdown.BeginState", std::bind(&SOS::HookCountdownInit, this));
     gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&SOS::HookBallExplode, this));
-    gameWrapper->HookEvent("Function TAGame.Ball_TA.OnHitGoal", std::bind(&SOS::HookOnHitGoal, this));
+    gameWrapper->HookEventWithCaller<BallWrapper>("Function TAGame.Ball_TA.OnHitGoal", std::bind(&SOS::HookOnHitGoal, this, _1, _2, _3));
     gameWrapper->HookEvent("Function TAGame.GameInfo_Replay_TA.InitGame", std::bind(&SOS::HookReplayCreated, this));
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.ReplayPlayback.BeginState", std::bind(&SOS::HookReplayStart, this));
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.ReplayPlayback.EndState", std::bind(&SOS::HookReplayEnd, this));
@@ -95,13 +95,17 @@ void SOS::HookBallExplode()
 {
     if (!*cvarEnabled || !matchCreated) { return; }
 
+    LockBallSpeed();
     PauseClockOnGoal();
     HookReplayWillEnd();
 }
 
-void SOS::HookOnHitGoal()
+void SOS::HookOnHitGoal(BallWrapper ball, void* params, std::string funcName)
 {
+    LockBallSpeed();
     goalSpeed = ballCurrentSpeed;
+
+    GoalImpactLocation = GetGoalImpactLocation(ball, params, funcName);
 }
 
 void SOS::HookReplayCreated()
@@ -112,7 +116,6 @@ void SOS::HookReplayCreated()
     diff = 0;
     SendEvent("game:replay_created", "game_replay_created");
 }
-
 
 void SOS::HookReplayStart()
 {
@@ -205,6 +208,8 @@ void SOS::HookStatEvent(ServerWrapper caller, void* args)
     {
         json::JSON goalScoreData;
         goalScoreData["goalspeed"] = goalSpeed;
+        goalScoreData["impact_location"]["X"] = GoalImpactLocation.X;
+        goalScoreData["impact_location"]["Y"] = GoalImpactLocation.Y;
         goalScoreData["scorer"]["name"] = receiverName;
         goalScoreData["scorer"]["id"] = receiverID;
         goalScoreData["ball_last_touch"]["player"] = lastTouch.playerID;

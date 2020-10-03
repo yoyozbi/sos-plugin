@@ -67,9 +67,11 @@ private:
     bool isInReplay = false;
 
     // BALL SPEED / GOAL SPEED VARIABLES
+    bool bLockBallSpeed = false;
     float ballCurrentSpeed = 0;
     float goalSpeed = 0;
     LastTouchInfo lastTouch;
+    Vector2F GoalImpactLocation = {0,0}; // top-left (0,0) bottom right (1,1)
 
     // MAIN FUNCTION (GameState.cpp)
     void UpdateGameState();
@@ -79,7 +81,7 @@ private:
     void HookAllEvents();
     void HookViewportTick();
     void HookBallExplode();
-    void HookOnHitGoal();
+    void HookOnHitGoal(BallWrapper ball, void* params, std::string funcName);
     void HookMatchCreated();
     void HookMatchDestroyed();
     void HookMatchEnded();
@@ -90,7 +92,7 @@ private:
     void HookReplayEnd();
     void HookReplayWillEnd();
     void HookStatEvent(ServerWrapper caller, void* args);
-    void HookCarBallHit(CarWrapper car, void * params, std::string funcName);
+    void HookCarBallHit(CarWrapper car, void* params, std::string funcName);
 
     // DATA GATHERING FUNCTIONS (GameState.cpp)
     void GetNameAndID(PriWrapper PRI, std::string &name, std::string &ID);
@@ -133,4 +135,9 @@ private:
     void OnWsMsg(connection_hdl hdl, PluginServer::message_ptr msg);
     void OnWsOpen(connection_hdl hdl) { this->ws_connections->insert(hdl); }
     void OnWsClose(connection_hdl hdl) { this->ws_connections->erase(hdl); }
+
+    // UTILITY FUNCTIONS
+    float ToKPH(float RawSpeed);
+    void LockBallSpeed();
+    Vector2F GetGoalImpactLocation(BallWrapper ball, void* params, std::string funcName);
 };

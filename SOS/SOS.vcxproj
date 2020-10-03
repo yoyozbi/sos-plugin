@@ -143,6 +143,7 @@
     <ClCompile Include="GameState.cpp" />
     <ClCompile Include="Nameplates.cpp" />
     <ClCompile Include="SOS.cpp" />
+    <ClCompile Include="Utility.cpp" />
     <ClCompile Include="Websocket.cpp" />
   </ItemGroup>
   <ItemGroup>

@@ -73,6 +73,9 @@
     <ClCompile Include="..\sos-plugin-includes\RenderingTools\Objects\VisualCamera.cpp">
       <Filter>RenderingTools\Objects</Filter>
     </ClCompile>
+    <ClCompile Include="Utility.cpp">
+      <Filter>Plugin Code\SOS</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="SOS.h">
