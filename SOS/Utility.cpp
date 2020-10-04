@@ -19,30 +19,24 @@ void SOS::LockBallSpeed()
 
 Vector2F SOS::GetGoalImpactLocation(BallWrapper ball, void* params, std::string funcName)
 {
-    //Get goal impact location
-
-    std::string printable;
+    // Goal Real Size: (1920, 752) - Extends past posts and ground
+    // Goal Scoreable Zone: (1800, 640)
+    // Ball Radius: ~93
 
     BallHitGoalParams* newParams = (BallHitGoalParams*)params;
     GoalWrapper goal(newParams->GoalPointer);
 
-    if(goal.memory_address != NULL)
-    {
-        ActorWrapper GoalOrientation = goal.GetGoalOrientation();
-        Vector GoalLocation = GoalOrientation.GetLocation();
-        Vector GoalDirection = RT::Matrix3(GoalOrientation.GetRotation()).forward;
-        
-        //Correct rounding errors. Results should either be 0 or 1
-        GoalDirection.X = abs(GoalDirection.X) < .5f ? 0.f : GoalDirection.X / abs(GoalDirection.X);
-        GoalDirection.Y = abs(GoalDirection.Y) < .5f ? 0.f : GoalDirection.Y / abs(GoalDirection.Y);
-        GoalDirection.Z = abs(GoalDirection.Z) < .5f ? 0.f : GoalDirection.Z / abs(GoalDirection.Z);
+    if(goal.memory_address == NULL) { return {0,0}; }
 
-        printable += " GoalLocation(" + std::to_string(GoalLocation.X) + ", " + std::to_string(GoalLocation.Y) + ", " + std::to_string(GoalLocation.Z) + ")";
-        printable += " GoalDirection(" + std::to_string(GoalDirection.X) + ", " + std::to_string(GoalDirection.Y) + ", " + std::to_string(GoalDirection.Z) + ")";
-    }
-    printable += " HitLocation(" + std::to_string(newParams->HitLocation.X) + ", " + std::to_string(newParams->HitLocation.Y) + ", " + std::to_string(newParams->HitLocation.Z) + ")";
+    //Get goal direction and correct rounding errors. Results should either be 0 or +-1
+    Vector GoalDirection = RT::Matrix3(goal.GetGoalOrientation().GetRotation()).forward;        
+    GoalDirection.X = abs(GoalDirection.X) < .5f ? 0.f : GoalDirection.X / abs(GoalDirection.X);
+    GoalDirection.Y = abs(GoalDirection.Y) < .5f ? 0.f : GoalDirection.Y / abs(GoalDirection.Y);
+    GoalDirection.Z = abs(GoalDirection.Z) < .5f ? 0.f : GoalDirection.Z / abs(GoalDirection.Z);
 
-    cvarManager->log(printable);
+    static const Vector2F GoalSize = {1800, 640}; // Scoreable zone
+    float HitX = ((newParams->HitLocation.X * GoalDirection.Y) + (GoalSize.X / 2)) / GoalSize.X;
+    float HitY = (GoalSize.Y - newParams->HitLocation.Z) / GoalSize.Y;
 
-    return Vector2F{0,0};
+    return Vector2F{ HitX, HitY };
 }
