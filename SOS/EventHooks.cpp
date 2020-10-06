@@ -18,7 +18,7 @@ void SOS::HookAllEvents()
     gameWrapper->HookEvent("Function TAGame.Car_TA.OnHitBall", std::bind(&SOS::UnpauseClockOnBallTouch, this));
 
     //GAME EVENTS
-    gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.WaitingForPlayers.BeginState", std::bind(&SOS::HookMatchCreated, this));
+    gameWrapper->HookEventPost("Function TAGame.Team_TA.PostBeginPlay", std::bind(&SOS::HookInitTeams, this));
     gameWrapper->HookEventPost("Function TAGame.GameEvent_Soccar_TA.Destroyed", std::bind(&SOS::HookMatchDestroyed, this));
     gameWrapper->HookEventPost("Function GameEvent_Soccar_TA.Countdown.BeginState", std::bind(&SOS::HookCountdownInit, this));
     gameWrapper->HookEvent("Function TAGame.Ball_TA.Explode", std::bind(&SOS::HookBallExplode, this));
@@ -53,15 +53,47 @@ void SOS::HookViewportTick()
     }
     else
     {
-        LOGC(std::to_string(timeSinceLastCall) + " - " + std::to_string((*cvarUpdateRate / 1000.f)) + " - Too early to send gamestate update");
+        //This spams the log too much
+        //LOGC(std::to_string(timeSinceLastCall) + " - " + std::to_string((*cvarUpdateRate / 1000.f)) + " - Too early to send gamestate update");
     }
     
     //Get ball speed every tick (for goal speed)
     GetCurrentBallSpeed();
 }
 
+void SOS::HookInitTeams()
+{
+    static int NumTimesCalled = 0;
+
+    //"Function TAGame.Team_TA.PostBeginPlay" is called twice rapidly, once for each team
+    // Only initialize lobby on the second hook once both teams are ready
+
+    ++NumTimesCalled;
+    if(NumTimesCalled >= 2)
+    {
+        //Set a delay so that everything can be filled in before trying to initialize
+        gameWrapper->SetTimeout([this](GameWrapper* gw)
+        {
+            if(ShouldRun())
+            {
+                HookMatchCreated();
+            }
+        }, .05f);
+        
+        NumTimesCalled = 0;
+    }
+
+    //Reset call counter after 2 seconds in case it never got through the >= 2 check
+    if(NumTimesCalled != 0)
+    {
+        gameWrapper->SetTimeout([this](GameWrapper* gw){ NumTimesCalled = 0; }, 2.f);
+    }
+}
+
 void SOS::HookMatchCreated()
 {
+    LOGC(" -------------- MATCH CREATED -------------- ");
+
     isClockPaused = true;
     matchCreated = true;
     diff = 0;
@@ -113,7 +145,6 @@ void SOS::HookReplayCreated()
     SendEvent("game:replay_created", "game_replay_created");
 }
 
-
 void SOS::HookReplayStart()
 {
     isInReplay = true;
@@ -147,7 +178,7 @@ void SOS::HookMatchEnded()
     json::JSON winnerData;
     winnerData["winner_team_num"] = NULL;
 
-    ServerWrapper server = gameWrapper->GetOnlineGame();
+    ServerWrapper server = GetCurrentGameState();
     if (!server.IsNull())
     {
         TeamWrapper winner = server.GetMatchWinner();

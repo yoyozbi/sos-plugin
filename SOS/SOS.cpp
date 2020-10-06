@@ -35,6 +35,15 @@ void SOS::onLoad()
     //Handle all the event hooking (EventHooks.cpp)
     HookAllEvents();
 
+    //Check if there is a game currently active
+    gameWrapper->SetTimeout([this](GameWrapper* gw)
+    {
+        if(ShouldRun())
+        {
+            HookMatchCreated();
+        }
+    }, 1.f);
+
     //Register drawable for nameplates (Nameplates.cpp)
     #ifdef USE_NAMEPLATES
     gameWrapper->RegisterDrawable(std::bind(&SOS::GetNameplateInfo, this, _1));
@@ -57,4 +66,39 @@ void SOS::OnEnabledChanged()
         isClockPaused = true;
         newRoundActive = false;
     }
+}
+
+bool SOS::ShouldRun()
+{
+    //Check if player is spectating
+    if (!gameWrapper->GetLocalCar().IsNull())
+    {
+        LOGC("GetLocalCar().IsNull(): (need true) false");
+        return false;
+    }
+
+    //Check if server exists
+    ServerWrapper server = GetCurrentGameState();
+    if (server.IsNull())
+    {
+        LOGC("server.IsNull(): (need false) true");
+        return false;
+    }
+
+    //Check if server playlist exists
+    if (server.GetPlaylist().memory_address == NULL)
+    {
+        LOGC("server.GetPlaylist().memory_address == NULL: (need false) true");
+        return false;
+    }
+
+    //Check if server playlist is valid
+    int playlistID = server.GetPlaylist().GetPlaylistId();
+    if (playlistID != 6 && playlistID != 24)
+    {
+        LOGC("server.GetPlaylist().GetPlaylistId(): (need 6 or 24) " + std::to_string(playlistID));
+        return false;
+    }
+
+    return true;
 }
