@@ -82,6 +82,7 @@ private:
     void HookViewportTick();
     void HookBallExplode();
     void HookOnHitGoal(BallWrapper ball, void* params, std::string funcName);
+    void HookInitTeams();
     void HookMatchCreated();
     void HookMatchDestroyed();
     void HookMatchEnded();
