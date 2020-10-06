@@ -73,7 +73,11 @@ private:
     LastTouchInfo lastTouch;
     Vector2F GoalImpactLocation = {0,0}; // top-left (0,0) bottom right (1,1)
 
+    // RESTRICTION FUNCTION
+    bool ShouldRun();
+
     // MAIN FUNCTION (GameState.cpp)
+    ServerWrapper GetCurrentGameState();
     void UpdateGameState();
     bool GetGameStateInfo(class json::JSON& state);
 

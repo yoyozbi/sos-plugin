@@ -11,12 +11,8 @@ void SOS::GetNameplateInfo(CanvasWrapper canvas)
     //It is registered as a drawable so things like the canvas.ProjectF method are accessible
     //Otherwise it would be part of the HookViewportClientTick event
 
-    if (!gameWrapper->IsInOnlineGame()) { return; }
-    if (!gameWrapper->GetLocalCar().IsNull()) { return; }
-    ServerWrapper server = gameWrapper->GetOnlineGame();
-    if (server.IsNull()) { return; }
-    if (server.GetPlaylist().memory_address == NULL) { return; }
-    if (server.GetPlaylist().GetPlaylistId() != 6 && server.GetPlaylist().GetPlaylistId() != 24) { return; }
+    if (!ShouldRun()) { return; }
+    ServerWrapper server = GetCurrentGameState();
 
     //Clamp to around 90fps to avoid sending too many updates, but keep smooth motion
     static steady_clock::time_point lastCallTime = steady_clock::now();
