@@ -2,3 +2,4 @@
 	path = sos-plugin-includes
 	url = git@gitlab.com:bakkesplugins/sos/sos-plugin-includes.git
 	branch = master
+	update = rebase
