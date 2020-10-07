@@ -11,8 +11,7 @@ void SOS::UpdateClock()
 
     if (!*cvarEnabled && !matchCreated && !isInReplay) { return; }
 
-    ServerWrapper server = GetCurrentGameState();
-    if (!gameWrapper->IsInOnlineGame() || server.IsNull()) { return; }
+    if (!ShouldRun()) { return; }
 
     //Reset waiting for overtime flag
     if (waitingForOvertimeToStart)
@@ -23,7 +22,13 @@ void SOS::UpdateClock()
     }
 
     //Unpause clock
+    //If time is updating, that means the first countdown must've already happened
+    //Useful for hotswapping plugin
+    firstCountdownHit = true;
+
+    //Unpause clock and reset cachedDecimalTime
     isClockPaused = false;
+    cachedDecimalTimeOnPause = 0;
 
     //Register round as active to bypass ball touch clock reset
     //Refer to UnpauseClockOnBallTouch() for more information
@@ -69,3 +74,18 @@ void SOS::PauseClockOnOvertimeStarted()
     newRoundActive = true;
     waitingForOvertimeToStart = true;
 }
+void SOS::OnPauseChanged()
+{
+    //This function is for match admins in private matches
+    if(gameWrapper->IsPaused())
+    {
+        isClockPaused = true;
+        cachedDecimalTimeOnPause = decimalTime;
+    }
+    else
+    {
+        timeSnapshot = steady_clock::now();
+        isClockPaused = false;
+    }
+}
+

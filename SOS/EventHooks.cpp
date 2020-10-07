@@ -16,6 +16,7 @@ void SOS::HookAllEvents()
     gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.OnGameTimeUpdated", std::bind(&SOS::UpdateClock, this));
     gameWrapper->HookEvent("Function TAGame.GameEvent_Soccar_TA.StartOvertime", std::bind(&SOS::PauseClockOnOvertimeStarted, this));
     gameWrapper->HookEvent("Function TAGame.Car_TA.OnHitBall", std::bind(&SOS::UnpauseClockOnBallTouch, this));
+    gameWrapper->HookEvent("Function Engine.WorldInfo.EventPauseChanged", std::bind(&SOS::OnPauseChanged, this));
 
     //GAME EVENTS
     gameWrapper->HookEventPost("Function TAGame.Team_TA.PostBeginPlay", std::bind(&SOS::HookInitTeams, this));
@@ -96,7 +97,7 @@ void SOS::HookMatchCreated()
 
     isClockPaused = true;
     matchCreated = true;
-    diff = 0;
+    decimalTime = 0;
     SendEvent("game:match_created", "game_match_created");
 }
 
@@ -113,7 +114,7 @@ void SOS::HookMatchDestroyed()
 
 void SOS::HookCountdownInit()
 {
-    if (!firstCountdownHit && gameWrapper->IsInOnlineGame())
+    if (!firstCountdownHit && ShouldRun())
     {
         firstCountdownHit = true;
         SendEvent("game:initialized", "initialized");
@@ -145,7 +146,7 @@ void SOS::HookReplayCreated()
     //No state
     isClockPaused = true;
     matchCreated = true;
-    diff = 0;
+    decimalTime = 0;
     SendEvent("game:replay_created", "game_replay_created");
 }
 
