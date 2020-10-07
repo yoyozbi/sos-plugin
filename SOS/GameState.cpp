@@ -194,20 +194,23 @@ void SOS::GetGameTimeInfo(json::JSON& state, ServerWrapper server)
 {
     //Get the time difference between now and the last time the clock was updated (in UpdateClock() hook)
     //Use a static float so that the diff remains the same value if the clock is paused
+    //localCachedDecimal is a terrible hack for making sure float time stays consistent when pausing/unpausing
+    float localCachedDecimal = 0;
     if (!isClockPaused)
     {
-        diff = duration_cast<duration<float>>(steady_clock::now() - timeSnapshot).count();
+        localCachedDecimal = cachedDecimalTimeOnPause;
+        decimalTime = duration_cast<duration<float>>(steady_clock::now() - timeSnapshot).count();
     }
 
     //Add or subtract the time difference to/from the current time on the clock. +/- depends on overtime status
     float floatTime = 0;
     if (!server.GetbOverTime())
     {
-        floatTime = (float)server.GetSecondsRemaining() - diff;
+        floatTime = (float)server.GetSecondsRemaining() - decimalTime - localCachedDecimal;
     }
     else
     {
-        floatTime = (float)server.GetSecondsRemaining() + diff;
+        floatTime = (float)server.GetSecondsRemaining() + decimalTime + localCachedDecimal;
     }
 
     //Zero out time after game ends because UpdateClock() isn't called again
@@ -222,7 +225,7 @@ void SOS::GetGameTimeInfo(json::JSON& state, ServerWrapper server)
         state["game"]["elapsed"] = gameWrapper->GetGameEventAsReplay().GetReplayTimeElapsed();
     }
 
-    LOGC(std::to_string((float)server.GetSecondsRemaining() - diff));
+    LOGC(std::to_string((float)server.GetSecondsRemaining() - decimalTime));
 }
 
 void SOS::GetBallInfo(json::JSON& state, ServerWrapper server)
@@ -254,7 +257,7 @@ void SOS::GetCurrentBallSpeed()
 {
     //This function is called by HookViewportClientTick event
     if (bLockBallSpeed) { return; }
-    if (!gameWrapper->IsInOnlineGame()) { return; }
+    if (!ShouldRun()) { return; }
     ServerWrapper server = GetCurrentGameState();
     if (server.IsNull()) { return; }
     BallWrapper ball = server.GetBall();
@@ -320,7 +323,7 @@ void SOS::GetCameraInfo(json::JSON& state)
 void SOS::GetLastTouchInfo(CarWrapper car)
 {
     //This function is called by the HookCarBallHit event
-    if (!gameWrapper->IsInOnlineGame()) { return; }
+    if (!ShouldRun()) { return; }
     if (car.IsNull()) { return; }
     PriWrapper PRI = car.GetPRI();
     if (PRI.IsNull()) { return; }

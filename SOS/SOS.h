@@ -55,7 +55,8 @@ private:
 
     // FLOAT TIME VARIABLES
     steady_clock::time_point timeSnapshot;
-    float diff = 0;
+    float decimalTime = 0;
+    float cachedDecimalTimeOnPause = 0;
     bool isClockPaused = false;
     bool newRoundActive = false;
     bool waitingForOvertimeToStart = false;
@@ -128,6 +129,7 @@ private:
     void PauseClockOnGoal();
     void UnpauseClockOnBallTouch();
     void PauseClockOnOvertimeStarted();
+    void OnPauseChanged();
 
     // WEBSOCKET FUNCTIONS
     PluginServer* ws_server;
