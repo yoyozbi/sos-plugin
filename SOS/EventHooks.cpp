@@ -245,6 +245,7 @@ void SOS::HookStatEvent(ServerWrapper caller, void* args)
         goalScoreData["impact_location"]["Y"] = GoalImpactLocation.Y;
         goalScoreData["scorer"]["name"] = receiverName;
         goalScoreData["scorer"]["id"] = receiverID;
+        goalScoreData["scorer"]["teamnum"] = receiver.IsNull() ? -1 : receiver.GetTeamNum();
         goalScoreData["ball_last_touch"]["player"] = lastTouch.playerID;
         goalScoreData["ball_last_touch"]["speed"] = lastTouch.speed;
         SendEvent("game:goal_scored", goalScoreData);
