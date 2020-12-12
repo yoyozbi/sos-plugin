@@ -76,6 +76,7 @@ private:
 
     // RESTRICTION FUNCTION
     bool ShouldRun();
+    bool IsSafeMode(int CurrentPlaylist, const std::vector<int>& SafePlaylists);
 
     // MAIN FUNCTION (GameState.cpp)
     ServerWrapper GetCurrentGameState();

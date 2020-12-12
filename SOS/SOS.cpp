@@ -93,12 +93,47 @@ bool SOS::ShouldRun()
     }
 
     //Check if server playlist is valid
+    // 6:  Private Match
+    // 22: Custom Tournaments
+    // 24: LAN Match
+    static const std::vector<int> SafePlaylists = {6, 22, 24};
     int playlistID = server.GetPlaylist().GetPlaylistId();
-    if (playlistID != 6 && playlistID != 24)
+    if (!IsSafeMode(playlistID, SafePlaylists))
     {
-        LOGC("server.GetPlaylist().GetPlaylistId(): (need 6 or 24) " + std::to_string(playlistID));
+        std::string NotSafeMessage;
+        
+        #if SHOULDLOG //Don't constantly compile the message unless it's going to be printed
+        NotSafeMessage += "server.GetPlaylist().GetPlaylistId(): (need ";
+        
+        //Add list of safe modes to string
+        for(const auto& Mode : SafeModes)
+        {
+            NotSafeMessage += std::to_string(Mode) + ", ";
+        }
+
+        //Remove last ", "
+        NotSafeMessage.pop_back();
+        NotSafeMessage.pop_back();
+
+        NotSafeMessage += ") " + std::to_string(playlistID);
+        #endif
+
+        LOGC(NotSafeMessage);
         return false;
     }
 
     return true;
+}
+
+bool SOS::IsSafeMode(int CurrentPlaylist, const std::vector<int>& SafePlaylists)
+{
+    for(const auto& SafePlaylist : SafePlaylists)
+    {
+        if (CurrentPlaylist == SafePlaylist)
+        {
+            return true;
+        }
+    }
+
+    return false;
 }
