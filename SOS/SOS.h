@@ -108,6 +108,7 @@ private:
     void GetGameTimeInfo(class json::JSON& state, ServerWrapper server);
     void GetBallInfo(class json::JSON& state, ServerWrapper server);
     void GetWinnerInfo(class json::JSON& state, ServerWrapper server);
+    void GetArenaInfo(class json::JSON& state);
     void GetCameraInfo(class json::JSON& state);
     void GetLastTouchInfo(CarWrapper car);
     void GetCurrentBallSpeed();
