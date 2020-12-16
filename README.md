@@ -38,6 +38,7 @@ The websocket reports the following events in `channel:event` format:
   "game:update_state": {
     "event": "string",
     "game": {
+      "arena": "string",
       "ballSpeed": "number",
       "ballTeam": "number",
       "hasTarget": "boolean",

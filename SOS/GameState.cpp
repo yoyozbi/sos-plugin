@@ -51,6 +51,7 @@ bool SOS::GetGameStateInfo(json::JSON& state)
     GetGameTimeInfo(state, server);
     GetBallInfo(state, server);
     GetWinnerInfo(state, server);
+    GetArenaInfo(state);
     GetCameraInfo(state);
 
     state["hasGame"] = true;
@@ -282,6 +283,11 @@ void SOS::GetWinnerInfo(json::JSON& state, ServerWrapper server)
     //Get the winning team
     state["game"]["hasWinner"] = true;
     state["game"]["winner"] = winner.GetCustomTeamName().IsNull() ? "" : winner.GetCustomTeamName().ToString();
+}
+
+void SOS::GetArenaInfo(json::JSON& state)
+{
+    state["game"]["arena"] = gameWrapper->GetCurrentMap();
 }
 
 void SOS::GetCameraInfo(json::JSON& state)
