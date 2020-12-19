@@ -49,11 +49,15 @@ The websocket reports the following events in `channel:event` format:
       "teams": {
         "0": {
           "name": "string",
-          "score": "number"
+          "score": "number",
+          "color_primary": "string",
+          "color_secondary": "string"
         },
         "1": {
           "name": "string",
-          "score": "number"
+          "score": "number",
+          "color_primary": "string",
+          "color_secondary": "string"
         }
       },
       "time": "number",

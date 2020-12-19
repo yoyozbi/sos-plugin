@@ -1,5 +1,6 @@
 #include "SOS.h"
 #include "json.hpp"
+#include "utils/parser.h"
 
 /*
     GetGameTimeInfo needs to mesh better with the functions in Clock.cpp
@@ -162,8 +163,12 @@ void SOS::GetTeamInfo(json::JSON& state, ServerWrapper server)
     {
         state["game"]["teams"][0]["name"] = "BLUE";
         state["game"]["teams"][0]["score"] = 0;
+        state["game"]["teams"][0]["color_primary"] = "000000";
+        state["game"]["teams"][0]["color_secondary"] = "000000";
         state["game"]["teams"][1]["name"] = "ORANGE";
         state["game"]["teams"][1]["score"] = 0;
+        state["game"]["teams"][1]["color_primary"] = "000000";
+        state["game"]["teams"][1]["color_secondary"] = "000000";
         return;
     }
 
@@ -172,11 +177,15 @@ void SOS::GetTeamInfo(json::JSON& state, ServerWrapper server)
     {
         state["game"]["teams"][0]["name"] = team0.GetCustomTeamName().IsNull() ? "BLUE" : team0.GetCustomTeamName().ToString();
         state["game"]["teams"][0]["score"] = team0.GetScore();
+        state["game"]["teams"][0]["color_primary"] = get_hex_from_color(team0.GetPrimaryColor() * 255.f).substr(1,6);
+        state["game"]["teams"][0]["color_secondary"] = get_hex_from_color(team0.GetSecondaryColor() * 255.f).substr(1,6);
     }
     else
     {
         state["game"]["teams"][0]["name"] = "BLUE";
         state["game"]["teams"][0]["score"] = 0;
+        state["game"]["teams"][0]["color_primary"] = "000000";
+        state["game"]["teams"][0]["color_secondary"] = "000000";
     }
 
     TeamWrapper team1 = server.GetTeams().Get(1);
@@ -184,11 +193,15 @@ void SOS::GetTeamInfo(json::JSON& state, ServerWrapper server)
     {
         state["game"]["teams"][1]["name"] = team1.GetCustomTeamName().IsNull() ? "ORANGE" : team1.GetCustomTeamName().ToString();
         state["game"]["teams"][1]["score"] = team1.GetScore();
+        state["game"]["teams"][1]["color_primary"] = get_hex_from_color(team1.GetPrimaryColor() * 255.f).substr(1,6);
+        state["game"]["teams"][1]["color_secondary"] = get_hex_from_color(team1.GetSecondaryColor() * 255.f).substr(1,6);
     }
     else
     {
         state["game"]["teams"][1]["name"] = "ORANGE";
         state["game"]["teams"][1]["score"] = 0;
+        state["game"]["teams"][1]["color_primary"] = "000000";
+        state["game"]["teams"][1]["color_secondary"] = "000000";
     }
 }
 
