@@ -1,35 +1,11 @@
-#ifdef USE_NAMEPLATES
-
-#include "SOS.h"
+#include "NameplatesManager.h"
 #include "json.hpp"
 #include "RenderingTools.h"
+#include "Plugin/MacrosStructsEnums.h"
+#include "Plugin/SOSUtils.h"
 
-
-void SOS::GetNameplateInfo(CanvasWrapper canvas)
+void NameplatesManager::GetNameplateInfo(CanvasWrapper canvas, CameraWrapper camera, ServerWrapper server, json& nameplatesState)
 {
-    //This function is a "drawable", meaning it runs with every GameViewportClient.Tick
-    //It is registered as a drawable so things like the canvas.ProjectF method are accessible
-    //Otherwise it would be part of the HookViewportClientTick event
-
-    if (!ShouldRun()) { return; }
-    ServerWrapper server = GetCurrentGameState();
-
-    //Clamp to around 90fps to avoid sending too many updates, but keep smooth motion
-    static steady_clock::time_point lastCallTime = steady_clock::now();
-    float timeSinceLastCall = duration_cast<duration<float>>(steady_clock::now() - lastCallTime).count();
-    if ((timeSinceLastCall * 1000) < 11.11f) {
-        LOGC("Too early to send nameplates update");
-        return;
-    }
-    lastCallTime = steady_clock::now();
-
-    //Create nameplates JSON object
-    json::JSON nameplatesState;
-    nameplatesState["nameplates"] = json::Object();
-
-    CameraWrapper camera = gameWrapper->GetCamera();
-    if (camera.IsNull()) { return; }
-
     RT::Frustum frustum = RT::Frustum(canvas, camera);
     
     //Get information about each car
@@ -41,10 +17,10 @@ void SOS::GetNameplateInfo(CanvasWrapper canvas)
         PriWrapper pri = car.GetPRI();
         if (pri.IsNull()) { continue; }
 
-        GetIndividualNameplate(canvas, frustum, nameplatesState, car);
+        GetIndividualNameplate(canvas, camera, frustum, car, nameplatesState);
     }
 
-    //Get information about the ball
+    //Get information about the ball position and size in screenspace
     BallWrapper ball = server.GetBall();
     if (!ball.IsNull())
     {
@@ -67,16 +43,12 @@ void SOS::GetNameplateInfo(CanvasWrapper canvas)
         nameplatesState["nameplates"]["ball"]["position"]["depth"] = 10000;
         nameplatesState["nameplates"]["ball"]["radius"] = 1;
     }
-
-    SendEvent("game:nameplate_tick", nameplatesState);
 }
 
-void SOS::GetIndividualNameplate(CanvasWrapper canvas, RT::Frustum &frustum, json::JSON& nameplatesState, CarWrapper car)
+void NameplatesManager::GetIndividualNameplate(CanvasWrapper canvas, CameraWrapper camera, RT::Frustum &frustum, CarWrapper car, json& nameplatesState)
 {
-    CameraWrapper camera = gameWrapper->GetCamera();
-
     std::string name, id;
-    GetNameAndID(car.GetPRI(), name, id);
+    SOSUtils::GetNameAndID(car.GetPRI(), name, id);
     
     //Location of nameplate in 3D space
     Vector nameplateLoc = car.GetLocation() + Vector{0,0,60};
@@ -127,7 +99,7 @@ void SOS::GetIndividualNameplate(CanvasWrapper canvas, RT::Frustum &frustum, jso
     nameplatesState["nameplates"]["players"][id]["scale"] = finalInterp;
 }
 
-float SOS::GetBallVerticalRadius(CanvasWrapper canvas, BallWrapper ball, CameraWrapper camera, RT::Frustum &frustum)
+float NameplatesManager::GetBallVerticalRadius(CanvasWrapper canvas, BallWrapper ball, CameraWrapper camera, RT::Frustum &frustum)
 {
     //Perspective view will stretch ball horizontally, so just get the vertical radius
 
@@ -161,4 +133,3 @@ float SOS::GetBallVerticalRadius(CanvasWrapper canvas, BallWrapper ball, CameraW
 
     return sqrtf(diff.X * diff.X + diff.Y * diff.Y);
 }
-#endif

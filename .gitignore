@@ -38,3 +38,5 @@ plugins/
 SOS/x64
 x64
 *.user
+RenderingTools/
+package.ps1
