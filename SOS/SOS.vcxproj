@@ -63,7 +63,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>NDEBUG;BAKKESTEST_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)sos-plugin-includes\RenderingTools;$(SolutionDir)sos-plugin-includes\SimpleJSON;$(SolutionDir)sos-plugin-includes\asio-1.12.2\include;$(SolutionDir)sos-plugin-includes\websocketpp-0.8.1;$(BakkesModPath)\bakkesmodsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)sos-plugin-includes\RenderingTools;$(SolutionDir)sos-plugin-includes\nlohmann-JSON;$(SolutionDir)sos-plugin-includes\asio-1.12.2\include;$(SolutionDir)sos-plugin-includes\websocketpp-0.8.1;$(BakkesModPath)\bakkesmodsdk\include;$(ProjectDir)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile />
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
     </ClCompile>
@@ -85,7 +85,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>USE_NAMEPLATES;NDEBUG;BAKKESTEST_EXPORTS;_WINDOWS;_USRDLL;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>$(SolutionDir)sos-plugin-includes\RenderingTools;$(SolutionDir)sos-plugin-includes\SimpleJSON;$(SolutionDir)sos-plugin-includes\asio-1.12.2\include;$(SolutionDir)sos-plugin-includes\websocketpp-0.8.1;$(BakkesModPath)\bakkesmodsdk\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(SolutionDir)sos-plugin-includes\RenderingTools;$(SolutionDir)sos-plugin-includes\nlohmann-JSON;$(SolutionDir)sos-plugin-includes\asio-1.12.2\include;$(SolutionDir)sos-plugin-includes\websocketpp-0.8.1;$(BakkesModPath)\bakkesmodsdk\include;$(ProjectDir)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>
       </PrecompiledHeaderFile>
       <RuntimeLibrary>MultiThreaded</RuntimeLibrary>
@@ -118,8 +118,13 @@
     <ClInclude Include="..\sos-plugin-includes\RenderingTools\Objects\Triangle.h" />
     <ClInclude Include="..\sos-plugin-includes\RenderingTools\Objects\VisualCamera.h" />
     <ClInclude Include="..\sos-plugin-includes\RenderingTools\RenderingTools.h" />
-    <ClInclude Include="SOS.h" />
-    <ClInclude Include="Structs.h" />
+    <ClInclude Include="Classes\BallSpeedManager.h" />
+    <ClInclude Include="Classes\ClockManager.h" />
+    <ClInclude Include="Classes\NameplatesManager.h" />
+    <ClInclude Include="Classes\WebsocketManager.h" />
+    <ClInclude Include="Plugin\MacrosStructsEnums.h" />
+    <ClInclude Include="Plugin\SOS.h" />
+    <ClInclude Include="Plugin\SOSUtils.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="..\sos-plugin-includes\RenderingTools\Extra\CanvasExtensions.cpp" />
@@ -140,19 +145,19 @@
     <ClCompile Include="..\sos-plugin-includes\RenderingTools\Objects\Sphere.cpp" />
     <ClCompile Include="..\sos-plugin-includes\RenderingTools\Objects\Triangle.cpp" />
     <ClCompile Include="..\sos-plugin-includes\RenderingTools\Objects\VisualCamera.cpp" />
-    <ClCompile Include="Clock.cpp" />
-    <ClCompile Include="EventHooks.cpp" />
-    <ClCompile Include="GameState.cpp" />
-    <ClCompile Include="Nameplates.cpp" />
-    <ClCompile Include="SOS.cpp" />
-    <ClCompile Include="Utility.cpp" />
-    <ClCompile Include="Websocket.cpp" />
+    <ClCompile Include="Classes\BallSpeedManager.cpp" />
+    <ClCompile Include="Classes\ClockManager.cpp" />
+    <ClCompile Include="Classes\NameplatesManager.cpp" />
+    <ClCompile Include="Classes\WebsocketManager.cpp" />
+    <ClCompile Include="Plugin\DebugRenderer.cpp" />
+    <ClCompile Include="Plugin\EventHooks.cpp" />
+    <ClCompile Include="Plugin\GameState.cpp" />
+    <ClCompile Include="Plugin\SOS.cpp" />
+    <ClCompile Include="Plugin\SOSUtils.cpp" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="..\goals.html" />
     <None Include="..\README.md" />
-    <None Include="..\Release\SOS.dll" />
-    <None Include="..\sos.set" />
+    <None Include="UI\sos.set" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
