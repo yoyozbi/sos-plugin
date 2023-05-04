@@ -28,11 +28,11 @@ bool SOSUtils::ShouldRun(std::shared_ptr<GameWrapper> gameWrapper)
     }
 
     //Check if player is spectating
-    if (!gameWrapper->GetLocalCar().IsNull())
+    /*if (!gameWrapper->GetLocalCar().IsNull())
     {
         LOGC("GetLocalCar().IsNull(): (need true) false");
         return false;
-    }
+    }*/
 
     //Check if server playlist exists
     if (server.GetPlaylist().memory_address == NULL)
@@ -47,7 +47,7 @@ bool SOSUtils::ShouldRun(std::shared_ptr<GameWrapper> gameWrapper)
     // 24: LAN Match
     static const std::vector<int> SafePlaylists = {6, 22, 24};
     int playlistID = server.GetPlaylist().GetPlaylistId();
-    if (!IsSafeMode(playlistID, SafePlaylists))
+    /*if (!IsSafeMode(playlistID, SafePlaylists))
     {
         #if SHOULDLOG //Don't constantly compile the message unless it's going to be printed
         std::string NotSafeMessage;
@@ -68,7 +68,7 @@ bool SOSUtils::ShouldRun(std::shared_ptr<GameWrapper> gameWrapper)
         #endif
 
         return false;
-    }
+    }*/
 
     return true;
 }
